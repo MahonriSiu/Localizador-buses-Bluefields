@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Localizador de Buses - Bluefields</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        .bus-icon {
+            font-size: 28px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            databaseURL: "https://localizador-buses-bluefields-default-rtdb.firebaseio.com/"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Crear el mapa centrado en Bluefields
+        const map = L.map('map').setView([11.9938, -83.7566], 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Ícono personalizado para el bus
+        const busIcon = L.divIcon({
+            className: 'bus-icon',
+            html: '👻',
+            iconSize: [30, 30]
+        });
+
+        // Marcador del bus (se actualiza en tiempo real)
+        let busMarker = L.marker([11.9938, -83.7566], { icon: busIcon }).addTo(map);
+
+        // Escuchar cambios en Firebase (nodo buses/bus1)
+        const busRef = ref(db, 'buses/bus1');
+        onValue(busRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data && data.lat && data.lng) {
+                const nuevaPosicion = [data.lat, data.lng];
+                busMarker.setLatLng(nuevaPosicion);
+                map.panTo(nuevaPosicion);
+            }
+        });
+    </script>
+
+</body>
+</html>
