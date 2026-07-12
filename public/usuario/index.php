@@ -28,10 +28,10 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        const map = L.map('map').setView([11.9938, -83.7566], 14);
+        const map = L.map('map').setView([12.028487, -83.770011], 14);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
+            attribution: 'OpenStreetMap'
         }).addTo(map);
 
         const busIcon = L.divIcon({
@@ -40,17 +40,30 @@
             iconSize: [20, 20]
         });
 
-        fetch('../obtener_bus.php?id=4')
-            .then(respuesta => respuesta.json())
-            .then(datos => {
-                if (datos.lat && datos.lng) {
-                    const posicion = [parseFloat(datos.lat), parseFloat(datos.lng)];
-                    L.marker(posicion, { icon: busIcon }).addTo(map);
-                    map.setView(posicion, 15);
-                } else {
-                    console.log("No se encontro el bus");
-                }
-            });
+        let marcadorBus = null;
+
+        function actualizarPosicionBus() {
+            fetch('../obtener_bus.php?id=4')
+                .then(respuesta => respuesta.json())
+                .then(datos => {
+                    if (datos.lat && datos.lng) {
+                        const posicion = [parseFloat(datos.lat), parseFloat(datos.lng)];
+
+                        if (marcadorBus === null) {
+                            marcadorBus = L.marker(posicion, { icon: busIcon }).addTo(map);
+                            map.setView(posicion, 15);
+                        } else {
+                            marcadorBus.setLatLng(posicion);
+                        }
+                    } else {
+                        console.log("No se encontro el bus");
+                    }
+                });
+        }
+
+        actualizarPosicionBus();
+
+        setInterval(actualizarPosicionBus, 5000);
     </script>
 
 </body>
