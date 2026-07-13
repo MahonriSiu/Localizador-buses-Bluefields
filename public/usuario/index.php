@@ -16,12 +16,30 @@
             height: 100vh;
             width: 100%;
         }
-        .bus-icon {
-            font-size: 28px;
+        #selector {
+            position: absolute;
+            top: 10px;
+            left: 50px;
+            z-index: 1000;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
+        select {
+            padding: 5px;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
+
+    <div id="selector">
+        <label for="rutaSeleccionada">Ruta: </label>
+        <select id="rutaSeleccionada" onchange="cambiarRuta()">
+            <option value="">Cargando rutas...</option>
+        </select>
+    </div>
 
     <div id="map"></div>
 
@@ -41,26 +59,54 @@
         });
 
         let marcadorBus = null;
+        let rutaActual = 1;
+        let primeraVezCargando = true;
+
+        function cargarRutas() {
+            fetch('../obtener_rutas.php')
+                .then(respuesta => respuesta.json())
+                .then(rutas => {
+                    const select = document.getElementById('rutaSeleccionada');
+                    select.innerHTML = '';
+                    rutas.forEach(ruta => {
+                        const opcion = document.createElement('option');
+                        opcion.value = ruta.id;
+                        opcion.textContent = ruta.nombre;
+                        select.appendChild(opcion);
+                    });
+                });
+        }
+
+        function cambiarRuta() {
+            rutaActual = document.getElementById('rutaSeleccionada').value;
+            primeraVezCargando = true;
+            actualizarPosicionBus();
+        }
 
         function actualizarPosicionBus() {
-            fetch('../obtener_bus.php?id=4')
+            fetch('../obtener_bus_por_ruta.php?ruta_id=' + rutaActual)
                 .then(respuesta => respuesta.json())
                 .then(datos => {
                     if (datos.lat && datos.lng) {
                         const posicion = [parseFloat(datos.lat), parseFloat(datos.lng)];
 
-                        if (marcadorBus === null) {
-                            marcadorBus = L.marker(posicion, { icon: busIcon }).addTo(map);
+                        if (marcadorBus !== null) {
+                            map.removeLayer(marcadorBus);
+                        }
+
+                        marcadorBus = L.marker(posicion, { icon: busIcon }).addTo(map);
+
+                        if (primeraVezCargando) {
                             map.setView(posicion, 15);
-                        } else {
-                            marcadorBus.setLatLng(posicion);
+                            primeraVezCargando = false;
                         }
                     } else {
-                        console.log("No se encontro el bus");
+                        console.log("No se encontro bus para esta ruta");
                     }
                 });
         }
 
+        cargarRutas();
         actualizarPosicionBus();
 
         setInterval(actualizarPosicionBus, 5000);

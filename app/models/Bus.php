@@ -27,6 +27,15 @@ class Bus {
         return $buses;
     }
 
+    public function obtenerPorRuta($rutaId) {
+        $sql = "SELECT * FROM buses WHERE ruta_id = ?";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bind_param("i", $rutaId);
+        $stmt->execute();
+        $resultado = $stmt->get_result();
+        return $resultado->fetch_assoc();
+    }
+
 }
 
 ?>
