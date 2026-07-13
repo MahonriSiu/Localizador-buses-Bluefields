@@ -5,6 +5,8 @@ if (!isset($_SESSION['admin_autenticado'])) {
     header("Location: login.php");
     exit();
 }
+
+$esAuditor = ($_SESSION['admin_rol'] === 'auditor');
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -49,14 +51,30 @@ if (!isset($_SESSION['admin_autenticado'])) {
             text-decoration: none;
             border-radius: 5px;
         }
+        .deshabilitado {
+            background-color: #cccccc !important;
+            pointer-events: none;
+        }
+        .aviso-rol {
+            background-color: #FFF3CD;
+            color: #856404;
+            padding: 10px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
     <div class="encabezado">
         <h2>Panel de Administrador - MiBus</h2>
-        <p>Bienvenido, <?php echo $_SESSION['admin_nombre']; ?></p>
+        <p>Bienvenido, <?php echo $_SESSION['admin_nombre']; ?> (<?php echo $_SESSION['admin_rol']; ?>)</p>
     </div>
+
+    <?php if ($esAuditor) { ?>
+    <div class="aviso-rol">
+        Modo Auditor: solo puede consultar informacion, no gestionar datos
+    </div>
+    <?php } ?>
 
     <div class="contenido">
 
@@ -75,7 +93,9 @@ if (!isset($_SESSION['admin_autenticado'])) {
         <div class="tarjeta">
             <h3>Gestion de Rutas y Buses</h3>
             <p>Administrar rutas y buses activos</p>
-            <a href="#">Proximamente</a>
+            <a href="#" class="<?php echo $esAuditor ? 'deshabilitado' : ''; ?>">
+                <?php echo $esAuditor ? 'No disponible para Auditor' : 'Proximamente'; ?>
+            </a>
         </div>
 
     </div>
