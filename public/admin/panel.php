@@ -22,7 +22,7 @@ $esAuditor = ($_SESSION['admin_rol'] === 'auditor');
             background-color: #f0f0f0;
         }
         .encabezado {
-            background-color: #1565C0;
+            background-color: #0D3B66;
             color: white;
             padding: 20px;
             text-align: center;
