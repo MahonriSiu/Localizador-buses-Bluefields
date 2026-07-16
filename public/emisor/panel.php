@@ -13,23 +13,16 @@ if (!isset($_SESSION['emisor_autenticado'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MiBus - Panel Emisor</title>
 
+    <link rel="stylesheet" href="../css/estilos.css" />
+
     <style>
         body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            background-color: #f0f0f0;
             text-align: center;
-        }
-        .caja {
-            background-color: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            width: 300px;
         }
         #estado {
             margin-top: 15px;
@@ -39,7 +32,7 @@ if (!isset($_SESSION['emisor_autenticado'])) {
 </head>
 <body>
 
-    <div class="caja">
+    <div class="caja-login">
         <h2>MiBus - Transmitiendo</h2>
         <p>Bus en linea, enviando ubicacion</p>
         <p id="estado">Esperando GPS...</p>

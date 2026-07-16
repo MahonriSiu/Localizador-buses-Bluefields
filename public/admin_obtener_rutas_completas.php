@@ -4,9 +4,8 @@ require_once(__DIR__ . "/../config/database.php");
 
 header("Content-Type: application/json");
 
-$sql = "SELECT DISTINCT rutas.* FROM rutas 
-        INNER JOIN buses ON buses.ruta_id = rutas.id 
-        WHERE buses.activo = 1";
+$sql = "SELECT rutas.*, buses.activo as bus_activo FROM rutas 
+        LEFT JOIN buses ON buses.ruta_id = rutas.id";
 
 $resultado = $conexion->query($sql);
 

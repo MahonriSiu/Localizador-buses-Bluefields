@@ -1,0 +1,148 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.caja-login {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    width: 300px;
+    text-align: center;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background-color: #1565C0;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.encabezado {
+    background-color: #0D3B66;
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+.contenido {
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.tarjeta {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    width: 250px;
+    text-align: center;
+}
+
+.tarjeta a {
+    display: block;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #1565C0;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+.deshabilitado {
+    background-color: #cccccc !important;
+    pointer-events: none;
+}
+
+.aviso-rol {
+    background-color: #FFF3CD;
+    color: #856404;
+    padding: 10px;
+    text-align: center;
+}
+
+#map {
+    height: 100vh;
+    width: 100%;
+}
+
+#selector {
+    position: absolute;
+    top: 10px;
+    left: 50px;
+    z-index: 1000;
+    background-color: white;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+
+#info-distancia {
+    position: absolute;
+    top: 70px;
+    left: 50px;
+    z-index: 1000;
+    background-color: white;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    font-size: 14px;
+}
+
+select {
+    padding: 5px;
+    font-size: 14px;
+}
+
+.panel-gestion {
+    max-width: 700px;
+    margin: 20px auto;
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #0D3B66;
+    color: white;
+}
+
+.volver {
+    display: inline-block;
+    margin-bottom: 15px;
+    color: #1565C0;
+    text-decoration: none;
+}
+
+body:has(.panel-gestion) {
+    background-color: #f0f0f0;
+}

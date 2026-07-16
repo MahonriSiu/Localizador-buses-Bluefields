@@ -6,31 +6,7 @@
     <title>MiBus - Localizador de Buses Bluefields</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-        #map {
-            height: 100vh;
-            width: 100%;
-        }
-        #selector {
-            position: absolute;
-            top: 10px;
-            left: 50px;
-            z-index: 1000;
-            background-color: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 0 5px rgba(0,0,0,0.3);
-        }
-        select {
-            padding: 5px;
-            font-size: 14px;
-        }
-    </style>
+    <link rel="stylesheet" href="../css/estilos.css" />
 </head>
 <body>
 
@@ -39,6 +15,10 @@
         <select id="rutaSeleccionada" onchange="cambiarRuta()">
             <option value="">Cargando rutas...</option>
         </select>
+    </div>
+
+    <div id="info-distancia">
+        Calculando distancia...
     </div>
 
     <div id="map"></div>
@@ -61,6 +41,29 @@
         let marcadorBus = null;
         let rutaActual = 1;
         let primeraVezCargando = true;
+        let posicionUsuario = null;
+
+        function calcularDistanciaKm(lat1, lng1, lat2, lng2) {
+            const radioTierra = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return radioTierra * c;
+        }
+
+        function obtenerPosicionUsuario() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(posicion) {
+                    posicionUsuario = {
+                        lat: posicion.coords.latitude,
+                        lng: posicion.coords.longitude
+                    };
+                });
+            }
+        }
 
         function cargarRutas() {
             fetch('../obtener_rutas.php')
@@ -100,12 +103,25 @@
                             map.setView(posicion, 15);
                             primeraVezCargando = false;
                         }
+
+                        if (posicionUsuario !== null) {
+                            const distancia = calcularDistanciaKm(
+                                posicionUsuario.lat, posicionUsuario.lng,
+                                posicion[0], posicion[1]
+                            );
+                            document.getElementById('info-distancia').innerText =
+                                'Distancia al bus: ' + distancia.toFixed(1) + ' km';
+                        } else {
+                            document.getElementById('info-distancia').innerText =
+                                'Activa tu ubicacion para ver distancia';
+                        }
                     } else {
                         console.log("No se encontro bus para esta ruta");
                     }
                 });
         }
 
+        obtenerPosicionUsuario();
         cargarRutas();
         actualizarPosicionBus();
 
