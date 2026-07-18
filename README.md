@@ -43,14 +43,6 @@ Modelo: gestiona el acceso a la base de datos (buses, rutas, usuarios, emisores)
 Vista: interfaces HTML y PHP que el usuario ve (mapa, panel admin, emisor).
 Controlador: recibe las peticiones, consulta al Modelo, y entrega la respuesta a la Vista.
 
-## Arquitectura del Proyecto (MVC)
-El proyecto sigue el patron Modelo-Vista-Controlador (MVC), con separacion
-completa de acceso entre los 3 roles del sistema.
-
-Modelo: gestiona el acceso a la base de datos (buses, rutas, usuarios, emisores).
-Vista: interfaces HTML y PHP que el usuario ve (mapa, panel admin, emisor).
-Controlador: recibe las peticiones, consulta al Modelo, y entrega la respuesta a la Vista.
-
 Estructura de carpetas del proyecto:
 
 - app
