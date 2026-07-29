@@ -146,3 +146,52 @@ th {
 body:has(.panel-gestion) {
     background-color: #f0f0f0;
 }
+
+@media (max-width: 600px) {
+    .caja-login {
+        width: 90%;
+        max-width: 300px;
+    }
+
+    #selector {
+        left: 10px;
+        right: 10px;
+        top: 10px;
+        font-size: 13px;
+    }
+
+    #selector select {
+        width: 100%;
+        margin-top: 5px;
+    }
+
+    #info-distancia {
+        left: 10px;
+        right: 10px;
+        top: 90px;
+        font-size: 13px;
+    }
+
+    .contenido {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .tarjeta {
+        width: 85%;
+    }
+
+    .panel-gestion {
+        max-width: 95%;
+        margin: 10px auto;
+        padding: 15px;
+    }
+
+    table {
+        font-size: 12px;
+    }
+
+    th, td {
+        padding: 5px;
+    }
+}
