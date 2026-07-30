@@ -6,7 +6,7 @@
     <title>MiBus - Localizador de Buses Bluefields</title>
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="../css/estilos.css" />
+    <link rel="stylesheet" href="../asset.php?tipo=css&archivo=estilos.css">
 </head>
 <body>
 

@@ -13,7 +13,7 @@ if (!isset($_SESSION['emisor_autenticado'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MiBus - Panel Emisor</title>
 
-    <link rel="stylesheet" href="../css/estilos.css" />
+    <link rel="stylesheet" href="../asset.php?tipo=css&archivo=estilos.css" />
 
     <style>
         body {

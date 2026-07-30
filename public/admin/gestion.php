@@ -15,7 +15,7 @@ $esAuditor = ($_SESSION['admin_rol'] === 'auditor');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MiBus - Gestion de Rutas</title>
 
-    <link rel="stylesheet" href="../css/estilos.css" />
+    <link rel="stylesheet" href="../asset.php?tipo=css&archivo=estilos.css" />
 </head>
 <body>
 
