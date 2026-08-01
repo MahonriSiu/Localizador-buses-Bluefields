@@ -195,3 +195,21 @@ body:has(.panel-gestion) {
         padding: 5px;
     }
 }
+
+.pagina-login {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f0f0;
+}
+
+.texto-error {
+    color: red;
+    margin-top: 10px;
+}
+
+.texto-estado {
+    margin-top: 15px;
+    font-weight: bold;
+}

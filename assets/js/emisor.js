@@ -1,9 +1,11 @@
+const rutaApiEmisor = "/Localizador-buses-Bluefields/public";
+
 function enviarUbicacion(lat, lng) {
     const datos = new FormData();
     datos.append('lat', lat);
     datos.append('lng', lng);
 
-    fetch('../emisor_actualizar.php', {
+    fetch(rutaApiEmisor + '/emisor_actualizar.php', {
         method: 'POST',
         body: datos
     })

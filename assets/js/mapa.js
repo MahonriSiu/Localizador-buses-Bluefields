@@ -1,3 +1,5 @@
+const rutaApi = "/Localizador-buses-Bluefields/public";
+
 const map = L.map('map').setView([12.028487, -83.770011], 14);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -27,7 +29,7 @@ function obtenerPosicionUsuario() {
 }
 
 function cargarRutas() {
-    fetch('../obtener_rutas.php')
+    fetch(rutaApi + '/obtener_rutas.php')
         .then(respuesta => respuesta.json())
         .then(rutas => {
             const select = document.getElementById('rutaSeleccionada');
@@ -48,7 +50,7 @@ function cambiarRuta() {
 }
 
 function actualizarPosicionBus() {
-    fetch('../obtener_bus_por_ruta.php?ruta_id=' + rutaActual)
+    fetch(rutaApi + '/obtener_bus_por_ruta.php?ruta_id=' + rutaActual)
         .then(respuesta => respuesta.json())
         .then(datos => {
             if (datos.lat && datos.lng) {
