@@ -1,7 +1,5 @@
 <?php
-
 class Emisor {
-
     private $conexion;
 
     public function __construct($conexion) {
@@ -17,13 +15,35 @@ class Emisor {
         return $resultado->fetch_assoc();
     }
 
-    public function actualizarPosicion($busId, $lat, $lng) {
-        $sql = "UPDATE buses SET lat = ?, lng = ?, timestamp_actualizacion = NOW(), activo = 1 WHERE id = ?";
+    public function crear($busId) {
+        // genero un codigo simple de 6 caracteres, facil de escribir para el que maneja el bus
+        $codigo = strtoupper(substr(md5(uniqid()), 0, 6));
+        $sql = "INSERT INTO emisores (codigo_acceso, bus_id) VALUES (?, ?)";
         $stmt = $this->conexion->prepare($sql);
-        $stmt->bind_param("ddi", $lat, $lng, $busId);
-        return $stmt->execute();
+        $stmt->bind_param("si", $codigo, $busId);
+        $stmt->execute();
+        return $codigo;
     }
 
-}
+    // el admin necesita ver el codigo de un bus especifico si se pierde
+    public function obtenerPorBus($busId) {
+        $sql = "SELECT * FROM emisores WHERE bus_id = ?";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bind_param("i", $busId);
+        $stmt->execute();
+        $resultado = $stmt->get_result();
+        return $resultado->fetch_assoc();
+    }
 
+    public function obtenerTodosConBus() {
+        $sql = "SELECT emisores.*, buses.ruta_id FROM emisores
+                JOIN buses ON emisores.bus_id = buses.id";
+        $resultado = $this->conexion->query($sql);
+        $lista = array();
+        while ($fila = $resultado->fetch_assoc()) {
+            $lista[] = $fila;
+        }
+        return $lista;
+    }
+}
 ?>

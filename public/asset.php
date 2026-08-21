@@ -1,39 +1,28 @@
 <?php
 
+$tiposPermitidos = array(
+    "css" => "text/css",
+    "js" => "application/javascript",
+    "img" => "image/png"
+);
+
 $tipo = isset($_GET['tipo']) ? $_GET['tipo'] : '';
-$archivo = isset($_GET['archivo']) ? $_GET['archivo'] : '';
+$archivo = isset($_GET['archivo']) ? basename($_GET['archivo']) : '';
 
-$carpetasPermitidas = array('css', 'js', 'img');
-
-if (!in_array($tipo, $carpetasPermitidas)) {
+if (!array_key_exists($tipo, $tiposPermitidos) || $archivo === '') {
     http_response_code(404);
-    exit();
+    die("Recurso no encontrado");
 }
-
-$archivo = basename($archivo);
 
 $ruta = __DIR__ . "/../assets/" . $tipo . "/" . $archivo;
 
 if (!file_exists($ruta)) {
     http_response_code(404);
-    exit();
+    die("Archivo no encontrado");
 }
 
-$extension = pathinfo($archivo, PATHINFO_EXTENSION);
-
-$tiposMime = array(
-    'css' => 'text/css',
-    'js' => 'application/javascript',
-    'png' => 'image/png',
-    'jpg' => 'image/jpeg',
-    'jpeg' => 'image/jpeg',
-    'svg' => 'image/svg+xml'
-);
-
-if (isset($tiposMime[$extension])) {
-    header("Content-Type: " . $tiposMime[$extension]);
-}
-
+header("Content-Type: " . $tiposPermitidos[$tipo]);
+header("Cache-Control: no-cache, no-store, must-revalidate");
+header("Pragma: no-cache");
+header("Expires: 0");
 readfile($ruta);
-
-?>

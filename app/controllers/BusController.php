@@ -1,27 +1,138 @@
 <?php
-
 require_once(__DIR__ . "/../models/Bus.php");
+require_once(__DIR__ . "/../models/Parada.php");
+require_once(__DIR__ . "/../models/Configuracion.php");
+require_once(__DIR__ . "/../models/RegistroAcceso.php");
+require_once(__DIR__ . "/../models/HistorialPosicion.php");
 
 class BusController {
-
     private $modeloBus;
+    private $modeloParada;
+    private $modeloConfiguracion;
+    private $modeloRegistroAcceso;
+    private $modeloHistorial;
+    private $conexion;
 
     public function __construct($conexion) {
+        $this->conexion = $conexion;
         $this->modeloBus = new Bus($conexion);
+        $this->modeloParada = new Parada($conexion);
+        $this->modeloConfiguracion = new Configuracion($conexion);
+        $this->modeloRegistroAcceso = new RegistroAcceso($conexion);
+        $this->modeloHistorial = new HistorialPosicion($conexion);
     }
 
-    public function obtenerPosicionBus($id) {
-        $bus = $this->modeloBus->obtenerPorId($id);
+    // lista de buses habilitados, para el selector del usuario final
+    public function obtenerBusesPublicos() {
+        header("Content-Type: application/json");
+        $buses = $this->modeloBus->obtenerPublicos();
+        echo json_encode($buses);
+    }
 
-        if ($bus) {
-            header("Content-Type: application/json");
-            echo json_encode($bus);
+    // posicion en vivo de un bus especifico, respeta el horario del sistema
+    public function obtenerEstadoBus($id) {
+        header("Content-Type: application/json");
+
+        if (!$this->modeloConfiguracion->estaDentroDeHorario()) {
+            echo json_encode(array("en_reposo" => true, "bus" => null));
+            return;
+        }
+
+        $bus = $this->modeloBus->obtenerPorId($id);
+        echo json_encode(array("en_reposo" => false, "bus" => $bus));
+    }
+
+    public function obtenerParadas($busId) {
+        header("Content-Type: application/json");
+        $paradas = $this->modeloParada->obtenerPorBus($busId);
+        echo json_encode($paradas);
+    }
+
+    public function estimarLlegada($busId, $paradaId) {
+        header("Content-Type: application/json");
+
+        $bus = $this->modeloBus->obtenerPorId($busId);
+        $parada = $this->obtenerParadaPorId($paradaId);
+
+        if (!$bus || !$parada) {
+            echo json_encode(array("exito" => false, "mensaje" => "Bus o parada no encontrados"));
+            return;
+        }
+
+        $distanciaKm = $this->modeloHistorial->haversine($bus['lat'], $bus['lng'], $parada['lat'], $parada['lng']);
+        $velocidadKmH = $this->modeloHistorial->calcularVelocidadPromedio($busId);
+
+        if (!$velocidadKmH || $velocidadKmH < 1) {
+            $velocidadKmH = 20;
+        }
+
+        $minutosEstimados = round(($distanciaKm / $velocidadKmH) * 60);
+
+        echo json_encode(array(
+            "exito" => true,
+            "distancia_km" => round($distanciaKm, 2),
+            "minutos_estimados" => $minutosEstimados
+        ));
+    }
+
+    private function obtenerParadaPorId($id) {
+        $sql = "SELECT * FROM paradas WHERE id = ?";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $resultado = $stmt->get_result();
+        return $resultado->fetch_assoc();
+    }
+
+    public function registrarUsuarioFinal($nombre, $telefono) {
+        header("Content-Type: application/json");
+
+        $telefonoLimpio = preg_replace('/[^0-9]/', '', $telefono);
+
+        if (strlen($telefonoLimpio) !== 8) {
+            echo json_encode(array("exito" => false, "mensaje" => "El numero debe tener 8 digitos"));
+            return;
+        }
+
+        if (trim($nombre) === '') {
+            echo json_encode(array("exito" => false, "mensaje" => "El nombre es obligatorio"));
+            return;
+        }
+
+        $sql = "INSERT INTO usuarios_finales (nombre, telefono) VALUES (?, ?)";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bind_param("ss", $nombre, $telefonoLimpio);
+
+        if ($stmt->execute()) {
+            $this->modeloRegistroAcceso->registrar('usuario_final_registro');
+            session_start();
+            $_SESSION['usuario_final_id'] = $this->conexion->insert_id;
+            echo json_encode(array("exito" => true));
         } else {
-            header("Content-Type: application/json");
-            echo json_encode(array("error" => "Bus no encontrado"));
+            echo json_encode(array("exito" => false, "mensaje" => "Este numero ya esta registrado"));
         }
     }
 
-}
+    public function iniciarSesionUsuarioFinal($telefono) {
+        header("Content-Type: application/json");
 
+        $telefonoLimpio = preg_replace('/[^0-9]/', '', $telefono);
+
+        $sql = "SELECT * FROM usuarios_finales WHERE telefono = ?";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bind_param("s", $telefonoLimpio);
+        $stmt->execute();
+        $resultado = $stmt->get_result();
+        $usuarioFinal = $resultado->fetch_assoc();
+
+        if ($usuarioFinal) {
+            session_start();
+            $_SESSION['usuario_final_id'] = $usuarioFinal['id'];
+            $this->modeloRegistroAcceso->registrar('usuario_final_acceso');
+            echo json_encode(array("exito" => true, "nombre" => $usuarioFinal['nombre']));
+        } else {
+            echo json_encode(array("exito" => false, "mensaje" => "Numero no registrado"));
+        }
+    }
+}
 ?>

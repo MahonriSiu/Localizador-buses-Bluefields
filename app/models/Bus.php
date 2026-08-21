@@ -1,7 +1,5 @@
 <?php
-
 class Bus {
-
     private $conexion;
 
     public function __construct($conexion) {
@@ -17,6 +15,19 @@ class Bus {
         return $resultado->fetch_assoc();
     }
 
+    // esta la usa el admin y el auditor, ven todos sin importar si estan habilitados
+    public function obtenerTodosCompletos() {
+        $sql = "SELECT buses.*, usuarios.nombre AS nombre_propietario FROM buses
+                LEFT JOIN usuarios ON buses.propietario_id = usuarios.id
+                ORDER BY buses.id DESC";
+        $resultado = $this->conexion->query($sql);
+        $buses = array();
+        while ($fila = $resultado->fetch_assoc()) {
+            $buses[] = $fila;
+        }
+        return $buses;
+    }
+
     public function obtenerTodos() {
         $sql = "SELECT * FROM buses";
         $resultado = $this->conexion->query($sql);
@@ -27,15 +38,58 @@ class Bus {
         return $buses;
     }
 
-    public function obtenerPorRuta($rutaId) {
-        $sql = "SELECT * FROM buses WHERE ruta_id = ? AND activo = 1";
-        $stmt = $this->conexion->prepare($sql);
-        $stmt->bind_param("i", $rutaId);
-        $stmt->execute();
-        $resultado = $stmt->get_result();
-        return $resultado->fetch_assoc();
+    // esta es la que ve el usuario final, solo los que el admin dejo habilitados
+    public function obtenerPublicos() {
+        $sql = "SELECT id, nombre, origen, destino FROM buses WHERE habilitado = 1";
+        $resultado = $this->conexion->query($sql);
+        $buses = array();
+        while ($fila = $resultado->fetch_assoc()) {
+            $buses[] = $fila;
+        }
+        return $buses;
     }
 
-}
+    public function obtenerPorPropietario($propietarioId) {
+        $sql = "SELECT * FROM buses WHERE propietario_id = ?";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bind_param("i", $propietarioId);
+        $stmt->execute();
+        $resultado = $stmt->get_result();
+        $buses = array();
+        while ($fila = $resultado->fetch_assoc()) {
+            $buses[] = $fila;
+        }
+        return $buses;
+    }
 
+    public function actualizarPosicion($id, $lat, $lng) {
+        $sql = "UPDATE buses SET lat = ?, lng = ?, timestamp_actualizacion = NOW(), activo = 1 WHERE id = ?";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bind_param("ddi", $lat, $lng, $id);
+        return $stmt->execute();
+    }
+
+    // crea el bus con todo de una vez: nombre, ruta que sigue, y dueno
+    public function crear($nombre, $origen, $destino, $propietarioId) {
+        $sql = "INSERT INTO buses (nombre, origen, destino, propietario_id, habilitado) VALUES (?, ?, ?, ?, 1)";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bind_param("sssi", $nombre, $origen, $destino, $propietarioId);
+        $stmt->execute();
+        return $this->conexion->insert_id;
+    }
+
+    public function toggleHabilitado($id, $habilitado) {
+        $sql = "UPDATE buses SET habilitado = ? WHERE id = ?";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bind_param("ii", $habilitado, $id);
+        return $stmt->execute();
+    }
+
+    public function eliminar($id) {
+        $sql = "DELETE FROM buses WHERE id = ?";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bind_param("i", $id);
+        return $stmt->execute();
+    }
+}
 ?>

@@ -1,43 +1,31 @@
+<?php require_once __DIR__ . '/../../../config/rutas.php'; ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MiBus - Acceso Emisor</title>
-
-    <link rel="stylesheet" href="/Localizador-buses-Bluefields/public/asset.php?tipo=css&archivo=estilos.css" />
+    <link rel="stylesheet" href="<?php echo URL_BASE; ?>/asset.php?tipo=css&archivo=estilos.css">
 </head>
-<body class="pagina-login">
+<body>
 
-    <div class="caja-login">
-        <h2>MiBus - Emisor</h2>
-        <p>Ingrese su codigo de acceso</p>
-        <input type="text" id="codigo" placeholder="Codigo de acceso">
-        <button onclick="iniciarSesion()">Ingresar</button>
-        <p id="mensaje" class="texto-error"></p>
+    <div class="contenedor-angosto">
+        <div class="tarjeta">
+            <img src="<?php echo URL_BASE; ?>/asset.php?tipo=img&archivo=logo.png" style="width: 80px; display: block; margin: 0 auto 16px;">
+            <h2>Acceso Emisor</h2>
+            <div id="mensaje-login"></div>
+
+            <div class="campo-formulario">
+                <label>Codigo de acceso</label>
+                <input type="text" id="codigo" placeholder="Ej: A3F9K2">
+            </div>
+            <button class="boton boton-primario boton-bloque" onclick="iniciarSesionEmisor(document.getElementById('codigo').value)">
+                Ingresar
+            </button>
+        </div>
     </div>
 
-    <script>
-        function iniciarSesion() {
-            const codigo = document.getElementById('codigo').value;
-
-            const datos = new FormData();
-            datos.append('codigo', codigo);
-
-            fetch('/Localizador-buses-Bluefields/public/emisor_login.php', {
-                method: 'POST',
-                body: datos
-            })
-            .then(respuesta => respuesta.json())
-            .then(resultado => {
-                if (resultado.exito) {
-                    window.location.href = '/Localizador-buses-Bluefields/public/emisor/panel.php';
-                } else {
-                    document.getElementById('mensaje').innerText = 'Codigo invalido';
-                }
-            });
-        }
-    </script>
-
+    <script src="<?php echo URL_BASE; ?>/asset.php?tipo=js&archivo=utilidades.js"></script>
+    <script src="<?php echo URL_BASE; ?>/asset.php?tipo=js&archivo=emisor.js"></script>
 </body>
 </html>

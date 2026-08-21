@@ -1,0 +1,23 @@
+/* 
+==================================================================
+FICHA TECNICA: PALETA DE COLORES OFICIAL - MiBus
+SIGBU - Sistema Inteligente de Gestion de Buses Urbanos
+==================================================================
+
+[ COLORES PRINCIPALES ]
+- Azul Primario:     #1E88E5  (Confianza y tecnologia)
+- Verde Secundario:  #3DC33D  (Movimiento y energia)
+- Amarillo Terciario:#F5D122  (Visibilidad y atencion)
+- Azul Oscuro:       #0D3B66  (Contraste y seriedad)
+
+[ COLORES DE ACENTO Y INTERFAZ ]
+- Rojo Acento:       #E63946  (Alertas puntuales)
+- Celeste Suave:     #B8E3F0  (Limpieza visual)
+- Blanco:            #FFFFFF  (Espacios y brillo)
+
+==================================================================
+PRUEBA DE CONTRASTE VERIFICADA:
+- Blanco sobre Azul Oscuro: 11.44:1 (Pasa AA y AAA)
+- Negro sobre Blanco: 21:1 | Negro sobre Amarillo: 14.02:1 (Ambos pasan)
+==================================================================
+*/

@@ -1,4 +1,4 @@
 <?php
-header("Location: public/usuario/index.php");
-exit();
+header("Location: public/index.php");
+exit;
 ?>
