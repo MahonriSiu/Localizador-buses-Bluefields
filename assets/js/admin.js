@@ -4,7 +4,9 @@ async function iniciarSesionAdmin(correo, contrasena) {
     const resultado = await llamarApi(URL_BASE + "/admin_login.php", { correo: correo, contrasena: contrasena });
 
     if (resultado.exito) {
-        window.location.href = URL_BASE + "/admin/panel.php";
+        window.location.href = resultado.debe_cambiar
+            ? URL_BASE + "/cambiar_contrasena.php"
+            : URL_BASE + "/admin/panel.php";
     } else {
         mostrarMensaje("mensaje-login", resultado.mensaje, true);
     }
@@ -12,16 +14,13 @@ async function iniciarSesionAdmin(correo, contrasena) {
 
 async function cargarResumen() {
     const resultado = await llamarApi(URL_BASE + "/admin_resumen.php", {});
-
-    document.getElementById("total-buses").textContent = resultado.total_buses;
-    document.getElementById("buses-habilitados").textContent = resultado.buses_habilitados;
-    document.getElementById("buses-transmitiendo").textContent = resultado.buses_transmitiendo;
+    animarNumero(document.getElementById("total-buses"), resultado.total_buses);
+    animarNumero(document.getElementById("buses-habilitados"), resultado.buses_habilitados);
+    animarNumero(document.getElementById("buses-transmitiendo"), resultado.buses_transmitiendo);
 }
 
 async function crearCuenta(nombre, correo, rol) {
-    const resultado = await llamarApi(URL_BASE + "/admin_crear_cuenta.php", {
-        nombre: nombre, correo: correo, rol: rol
-    });
+    const resultado = await llamarApi(URL_BASE + "/admin_crear_cuenta.php", { nombre: nombre, correo: correo, rol: rol });
 
     if (resultado.exito) {
         mostrarMensaje("mensaje-cuentas", "Cuenta creada correctamente con contrasena admin123", false);
@@ -34,22 +33,31 @@ async function crearCuenta(nombre, correo, rol) {
 async function cargarCuentas() {
     const resultado = await llamarApi(URL_BASE + "/admin_obtener_cuentas.php", {});
 
-    const cuerpoAuditores = document.getElementById("cuerpo-tabla-auditores");
-    const cuerpoPropietarios = document.getElementById("cuerpo-tabla-propietarios");
+    transicionDom(function () {
+        const totalEl = document.getElementById("total-cuentas");
+        if (totalEl) totalEl.textContent = resultado.total_cuentas;
 
-    if (cuerpoAuditores) {
-        cuerpoAuditores.innerHTML = "";
-        resultado.auditores.forEach(function (usuario) {
-            cuerpoAuditores.innerHTML += filaCuenta(usuario);
-        });
-    }
+        const cuerpoAdmins = document.getElementById("cuerpo-tabla-admins");
+        if (cuerpoAdmins && resultado.admins) {
+            cuerpoAdmins.innerHTML = "";
+            resultado.admins.forEach(function (usuario) {
+                cuerpoAdmins.innerHTML += "<tr><td>" + usuario.nombre + "</td><td>" + usuario.correo + "</td>" +
+                    "<td><button class='boton boton-peligro' onclick='resetearContrasena(" + usuario.id + ")'>Resetear</button></td></tr>";
+            });
+        }
 
-    if (cuerpoPropietarios) {
-        cuerpoPropietarios.innerHTML = "";
-        resultado.propietarios.forEach(function (usuario) {
-            cuerpoPropietarios.innerHTML += filaCuenta(usuario);
-        });
-    }
+        const cuerpoAuditores = document.getElementById("cuerpo-tabla-auditores");
+        const cuerpoPropietarios = document.getElementById("cuerpo-tabla-propietarios");
+
+        if (cuerpoAuditores) {
+            cuerpoAuditores.innerHTML = "";
+            resultado.auditores.forEach(function (usuario) { cuerpoAuditores.innerHTML += filaCuenta(usuario); });
+        }
+        if (cuerpoPropietarios) {
+            cuerpoPropietarios.innerHTML = "";
+            resultado.propietarios.forEach(function (usuario) { cuerpoPropietarios.innerHTML += filaCuenta(usuario); });
+        }
+    });
 }
 
 function filaCuenta(usuario) {
@@ -63,16 +71,12 @@ function filaCuenta(usuario) {
 
 async function verHistorial(usuarioId) {
     const resultado = await llamarApi(URL_BASE + "/admin_ver_historial.php", { usuario_id: usuarioId });
-
     if (!resultado.exito || resultado.historial.length === 0) {
         alert("Este usuario no tiene contrasenas anteriores registradas.");
         return;
     }
-
     let texto = "Historial de contrasenas:\n\n";
-    resultado.historial.forEach(function (fila) {
-        texto += fila.contrasena_anterior + "  (" + fila.fecha_cambio + ")\n";
-    });
+    resultado.historial.forEach(function (fila) { texto += fila.contrasena_anterior + "  (" + fila.fecha_cambio + ")\n"; });
     alert(texto);
 }
 
@@ -81,7 +85,6 @@ async function resetearContrasena(usuarioId) {
     if (!confirmar) return;
 
     const resultado = await llamarApi(URL_BASE + "/admin_resetear_contrasena.php", { usuario_id: usuarioId });
-
     if (resultado.exito) {
         alert("Nueva contrasena: " + resultado.nueva_contrasena + "\n\nCopiala y entregasela al usuario.");
         cargarCuentas();
@@ -97,7 +100,6 @@ async function cargarSelectorPropietarios(idSelector) {
         selector.innerHTML = "<option value=''>No hay propietarios creados aun</option>";
         return;
     }
-
     resultado.propietarios.forEach(function (p) {
         const opcion = document.createElement("option");
         opcion.value = p.id;
@@ -106,14 +108,13 @@ async function cargarSelectorPropietarios(idSelector) {
     });
 }
 
-async function crearBus(nombre, origen, destino, propietarioId) {
+async function crearBus(nombre, origen, destino, descripcion, propietarioId) {
     if (!propietarioId) {
         mostrarMensaje("mensaje-bus", "Debes crear un propietario antes de crear un bus", true);
         return;
     }
-
     const resultado = await llamarApi(URL_BASE + "/admin_crear_bus.php", {
-        nombre: nombre, origen: origen, destino: destino, propietario_id: propietarioId
+        nombre: nombre, origen: origen, destino: destino, descripcion: descripcion, propietario_id: propietarioId
     });
 
     if (resultado.exito) {
@@ -130,31 +131,43 @@ async function cargarBusesAdmin() {
     const cuerpoTabla = document.getElementById("cuerpo-tabla-buses");
     if (!cuerpoTabla) return;
 
-    if (!resultado.buses) {
-        cuerpoTabla.innerHTML = "<tr><td colspan='5'>" + (resultado.mensaje || "No se pudieron cargar los buses") + "</td></tr>";
-        return;
-    }
+    transicionDom(function () {
+        if (!resultado.buses) {
+            cuerpoTabla.innerHTML = "<tr><td colspan='6'>" + (resultado.mensaje || "No se pudieron cargar los buses") + "</td></tr>";
+            return;
+        }
+        cuerpoTabla.innerHTML = "";
+        if (resultado.buses.length === 0) {
+            cuerpoTabla.innerHTML = "<tr><td colspan='6'>Aun no hay buses creados</td></tr>";
+            return;
+        }
 
-    cuerpoTabla.innerHTML = "";
-
-    if (resultado.buses.length === 0) {
-        cuerpoTabla.innerHTML = "<tr><td colspan='5'>Aun no hay buses creados</td></tr>";
-        return;
-    }
-
-    resultado.buses.forEach(function (bus) {
-        const etiqueta = bus.habilitado == 1
-            ? "<span class='etiqueta-activo'>Habilitado</span>"
-            : "<span class='etiqueta-inactivo'>Deshabilitado</span>";
-
-        cuerpoTabla.innerHTML += "<tr>" +
-            "<td>" + bus.nombre + "</td>" +
-            "<td>" + bus.origen + " - " + bus.destino + "</td>" +
-            "<td>" + (bus.nombre_propietario || "Sin dueno") + "</td>" +
-            "<td>" + etiqueta + "</td>" +
-            "<td><button class='boton boton-secundario' onclick='toggleBus(" + bus.id + ", " + (bus.habilitado == 1 ? 0 : 1) + ")'>Cambiar estado</button></td>" +
-            "</tr>";
+        resultado.buses.forEach(function (bus) {
+            const etiqueta = bus.habilitado == 1 ? "<span class='etiqueta-activo'>Habilitado</span>" : "<span class='etiqueta-inactivo'>Deshabilitado</span>";
+            cuerpoTabla.innerHTML += "<tr>" +
+                "<td>" + bus.nombre + "</td>" +
+                "<td>" + bus.origen + " - " + bus.destino + "</td>" +
+                "<td>" + (bus.nombre_propietario || "Sin dueno") + "</td>" +
+                "<td>" + etiqueta + "</td>" +
+                "<td><button class='boton boton-secundario' onclick='toggleBus(" + bus.id + ", " + (bus.habilitado == 1 ? 0 : 1) + ")'>Cambiar estado</button></td>" +
+                "<td><button class='boton boton-secundario' onclick='verCodigoEmisor(" + bus.id + ")'>Ver codigo</button> " +
+                "<button class='boton boton-peligro' onclick='regenerarCodigoEmisor(" + bus.id + ")'>Regenerar</button></td>" +
+                "</tr>";
+        });
     });
+}
+
+async function verCodigoEmisor(busId) {
+    const respuesta = await fetch(URL_BASE + "/admin_obtener_codigo_emisor.php?bus_id=" + busId);
+    const resultado = await respuesta.json();
+    alert(resultado.exito ? "Codigo de acceso del emisor: " + resultado.codigo : resultado.mensaje);
+}
+
+async function regenerarCodigoEmisor(busId) {
+    const confirmar = confirm("Esto invalida el codigo anterior. El chofer debera usar el nuevo codigo. Continuar?");
+    if (!confirmar) return;
+    const resultado = await llamarApi(URL_BASE + "/admin_regenerar_codigo_emisor.php", { id: busId });
+    if (resultado.exito) alert("Nuevo codigo de acceso: " + resultado.codigo);
 }
 
 async function toggleBus(id, nuevoEstado) {
@@ -174,10 +187,7 @@ async function cargarSelectorBusesParaParadas() {
         opcion.textContent = bus.nombre;
         selector.appendChild(opcion);
     });
-
-    if (resultado.buses.length > 0) {
-        cargarParadasDelBus(resultado.buses[0].id);
-    }
+    if (resultado.buses.length > 0) cargarParadasDelBus(resultado.buses[0].id);
 }
 
 async function agregarParada() {
@@ -187,10 +197,7 @@ async function agregarParada() {
     const lng = document.getElementById("lng-parada").value;
     const orden = document.getElementById("orden-parada").value;
 
-    const resultado = await llamarApi(URL_BASE + "/admin_agregar_parada.php", {
-        bus_id: busId, nombre: nombre, lat: lat, lng: lng, orden: orden
-    });
-
+    const resultado = await llamarApi(URL_BASE + "/admin_agregar_parada.php", { bus_id: busId, nombre: nombre, lat: lat, lng: lng, orden: orden });
     if (resultado.exito) {
         mostrarMensaje("mensaje-paradas", "Parada agregada correctamente", false);
         cargarParadasDelBus(busId);
@@ -200,17 +207,15 @@ async function agregarParada() {
 async function cargarParadasDelBus(busId) {
     const respuesta = await fetch(URL_BASE + "/admin_obtener_paradas.php?bus_id=" + busId);
     const resultado = await respuesta.json();
-
     const cuerpo = document.getElementById("cuerpo-tabla-paradas");
     if (!cuerpo) return;
 
-    cuerpo.innerHTML = "";
-    resultado.paradas.forEach(function (parada) {
-        cuerpo.innerHTML += "<tr>" +
-            "<td>" + parada.nombre + "</td>" +
-            "<td>" + parada.orden + "</td>" +
-            "<td><button class='boton boton-peligro' onclick='eliminarParada(" + parada.id + ", " + busId + ")'>Eliminar</button></td>" +
-            "</tr>";
+    transicionDom(function () {
+        cuerpo.innerHTML = "";
+        resultado.paradas.forEach(function (parada) {
+            cuerpo.innerHTML += "<tr><td>" + parada.nombre + "</td><td>" + parada.orden + "</td>" +
+                "<td><button class='boton boton-peligro' onclick='eliminarParada(" + parada.id + ", " + busId + ")'>Eliminar</button></td></tr>";
+        });
     });
 }
 
@@ -220,26 +225,18 @@ async function eliminarParada(id, busId) {
 }
 
 let temporizadorHorario = null;
-
 function programarGuardadoHorario() {
     if (temporizadorHorario) clearTimeout(temporizadorHorario);
     temporizadorHorario = setTimeout(function () {
         const apertura = document.getElementById("hora-apertura").value;
         const cierre = document.getElementById("hora-cierre").value;
-        if (apertura && cierre) {
-            configurarHorario(apertura, cierre);
-        }
+        if (apertura && cierre) configurarHorario(apertura, cierre);
     }, 800);
 }
 
 async function configurarHorario(horaApertura, horaCierre) {
-    const resultado = await llamarApi(URL_BASE + "/admin_configurar_horario.php", {
-        hora_apertura: horaApertura, hora_cierre: horaCierre
-    });
-
-    if (resultado.exito) {
-        mostrarMensaje("mensaje-horario", "Horario guardado automaticamente", false);
-    }
+    const resultado = await llamarApi(URL_BASE + "/admin_configurar_horario.php", { hora_apertura: horaApertura, hora_cierre: horaCierre });
+    if (resultado.exito) mostrarMensaje("mensaje-horario", "Horario guardado automaticamente", false);
 }
 
 async function cargarHorarioActual() {
@@ -255,18 +252,16 @@ async function cargarSolicitudes() {
     const cuerpo = document.getElementById("cuerpo-tabla-solicitudes");
     if (!cuerpo) return;
 
-    cuerpo.innerHTML = "";
-    if (resultado.solicitudes.length === 0) {
-        cuerpo.innerHTML = "<tr><td colspan='3'>No hay solicitudes pendientes</td></tr>";
-        return;
-    }
-
-    resultado.solicitudes.forEach(function (s) {
-        cuerpo.innerHTML += "<tr>" +
-            "<td>" + s.correo + "</td>" +
-            "<td>" + s.fecha_solicitud + "</td>" +
-            "<td><button class='boton boton-secundario' onclick='atenderSolicitud(" + s.id + ")'>Marcar atendida</button></td>" +
-            "</tr>";
+    transicionDom(function () {
+        cuerpo.innerHTML = "";
+        if (resultado.solicitudes.length === 0) {
+            cuerpo.innerHTML = "<tr><td colspan='3'>No hay solicitudes pendientes</td></tr>";
+            return;
+        }
+        resultado.solicitudes.forEach(function (s) {
+            cuerpo.innerHTML += "<tr><td>" + s.correo + "</td><td>" + s.fecha_solicitud + "</td>" +
+                "<td><button class='boton boton-secundario' onclick='atenderSolicitud(" + s.id + ")'>Marcar atendida</button></td></tr>";
+        });
     });
 }
 
@@ -276,10 +271,7 @@ async function atenderSolicitud(id) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    if (document.getElementById("cuerpo-tabla-buses")) {
-        cargarBusesAdmin();
-        cargarSelectorPropietarios("propietario-bus");
-    }
+    if (document.getElementById("cuerpo-tabla-buses")) { cargarBusesAdmin(); cargarSelectorPropietarios("propietario-bus"); }
     if (document.getElementById("bus-para-parada")) cargarSelectorBusesParaParadas();
     if (document.getElementById("cuerpo-tabla-auditores")) cargarCuentas();
     if (document.getElementById("cuerpo-tabla-solicitudes")) cargarSolicitudes();

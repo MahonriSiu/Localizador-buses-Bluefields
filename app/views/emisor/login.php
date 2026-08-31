@@ -9,19 +9,29 @@
 </head>
 <body>
 
-    <div class="contenedor-angosto">
-        <div class="tarjeta">
-            <img src="<?php echo URL_BASE; ?>/asset.php?tipo=img&archivo=logo.png" style="width: 80px; display: block; margin: 0 auto 16px;">
-            <h2>Acceso Emisor</h2>
-            <div id="mensaje-login"></div>
+    <div class="auth-pagina">
+        <div class="auth-marca">
+            <img src="<?php echo URL_BASE; ?>/asset.php?tipo=img&archivo=logo.png" class="auth-marca-logo">
+            <h1>MiBus</h1>
+            <p>Panel del chofer para transmitir la ubicacion del bus.</p>
+            <span class="auth-marca-pulso"><span class="pulso-vivo pulso-naranja"></span> Envio de ubicacion</span>
+            <span class="auth-marca-rol">Emisor</span>
+        </div>
 
-            <div class="campo-formulario">
-                <label>Codigo de acceso</label>
-                <input type="text" id="codigo" placeholder="Ej: A3F9K2">
+        <div class="auth-formulario-lado">
+            <div class="auth-formulario-caja">
+                <h2>Acceso del chofer</h2>
+                <p class="auth-subtitulo">Ingresa el codigo de acceso asignado a tu bus.</p>
+                <div id="mensaje-login"></div>
+
+                <div class="campo-formulario">
+                    <label>Codigo de acceso</label>
+                    <input type="text" id="codigo" placeholder="Ej: A3F9K2">
+                </div>
+                <button class="boton boton-primario boton-bloque" onclick="iniciarSesionEmisor(document.getElementById('codigo').value)">
+                    Ingresar
+                </button>
             </div>
-            <button class="boton boton-primario boton-bloque" onclick="iniciarSesionEmisor(document.getElementById('codigo').value)">
-                Ingresar
-            </button>
         </div>
     </div>
 

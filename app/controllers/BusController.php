@@ -22,14 +22,12 @@ class BusController {
         $this->modeloHistorial = new HistorialPosicion($conexion);
     }
 
-    // lista de buses habilitados, para el selector del usuario final
     public function obtenerBusesPublicos() {
         header("Content-Type: application/json");
         $buses = $this->modeloBus->obtenerPublicos();
         echo json_encode($buses);
     }
 
-    // posicion en vivo de un bus especifico, respeta el horario del sistema
     public function obtenerEstadoBus($id) {
         header("Content-Type: application/json");
 
@@ -75,6 +73,63 @@ class BusController {
         ));
     }
 
+    public function estimarLlegadaDesdeUsuario($busId, $latUsuario, $lngUsuario) {
+        header("Content-Type: application/json");
+
+        $bus = $this->modeloBus->obtenerPorId($busId);
+
+        if (!$bus) {
+            echo json_encode(array("exito" => false, "mensaje" => "Bus no encontrado"));
+            return;
+        }
+        if (!$bus['lat'] || !$bus['lng']) {
+            echo json_encode(array("exito" => false, "mensaje" => "El bus aun no ha transmitido su ubicacion"));
+            return;
+        }
+        if (!$latUsuario || !$lngUsuario) {
+            echo json_encode(array("exito" => false, "mensaje" => "No se pudo obtener tu ubicacion"));
+            return;
+        }
+
+        $distanciaKm = $this->modeloHistorial->haversine($bus['lat'], $bus['lng'], $latUsuario, $lngUsuario);
+        $velocidadKmH = $this->modeloHistorial->calcularVelocidadPromedio($busId);
+
+        if (!$velocidadKmH || $velocidadKmH < 1) {
+            $velocidadKmH = 20;
+        }
+
+        $minutosEstimados = round(($distanciaKm / $velocidadKmH) * 60);
+
+        echo json_encode(array(
+            "exito" => true,
+            "distancia_km" => round($distanciaKm, 2),
+            "distancia_m" => round($distanciaKm * 1000),
+            "minutos_estimados" => $minutosEstimados
+        ));
+    }
+
+    public function obtenerRecorridoBus($busId) {
+        header("Content-Type: application/json");
+
+        $puntos = $this->modeloHistorial->obtenerRecorridoReciente($busId, 300);
+        $primerRegistro = $this->modeloHistorial->obtenerPrimerRegistro($busId);
+
+        $diasAprendizaje = 0;
+        $rutaAprendida = false;
+
+        if ($primerRegistro) {
+            $dias = (strtotime('now') - strtotime($primerRegistro)) / 86400;
+            $diasAprendizaje = floor($dias) + 1;
+            $rutaAprendida = $dias >= 3;
+        }
+
+        echo json_encode(array(
+            "puntos" => $puntos,
+            "dias_aprendizaje" => min($diasAprendizaje, 3),
+            "ruta_aprendida" => $rutaAprendida
+        ));
+    }
+
     private function obtenerParadaPorId($id) {
         $sql = "SELECT * FROM paradas WHERE id = ?";
         $stmt = $this->conexion->prepare($sql);
@@ -93,7 +148,6 @@ class BusController {
             echo json_encode(array("exito" => false, "mensaje" => "El numero debe tener 8 digitos"));
             return;
         }
-
         if (trim($nombre) === '') {
             echo json_encode(array("exito" => false, "mensaje" => "El nombre es obligatorio"));
             return;
@@ -104,9 +158,10 @@ class BusController {
         $stmt->bind_param("ss", $nombre, $telefonoLimpio);
 
         if ($stmt->execute()) {
-            $this->modeloRegistroAcceso->registrar('usuario_final_registro');
+            $nuevoId = $this->conexion->insert_id;
+            $this->modeloRegistroAcceso->registrar('usuario_final_registro', $nuevoId);
             session_start();
-            $_SESSION['usuario_final_id'] = $this->conexion->insert_id;
+            $_SESSION['usuario_final_id'] = $nuevoId;
             echo json_encode(array("exito" => true));
         } else {
             echo json_encode(array("exito" => false, "mensaje" => "Este numero ya esta registrado"));
@@ -128,11 +183,25 @@ class BusController {
         if ($usuarioFinal) {
             session_start();
             $_SESSION['usuario_final_id'] = $usuarioFinal['id'];
-            $this->modeloRegistroAcceso->registrar('usuario_final_acceso');
+            // cada reingreso queda registrado, no solo el primer registro
+            $this->modeloRegistroAcceso->registrar('usuario_final_acceso', $usuarioFinal['id']);
             echo json_encode(array("exito" => true, "nombre" => $usuarioFinal['nombre']));
         } else {
             echo json_encode(array("exito" => false, "mensaje" => "Numero no registrado"));
         }
+    }
+    
+    public function obtenerRutaDefinida($busId) {
+        header("Content-Type: application/json");
+
+        require_once(__DIR__ . "/../models/RutaBus.php");
+        $modeloRuta = new RutaBus($this->conexion);
+        $ruta = $modeloRuta->obtenerPorBus($busId);
+
+        echo json_encode(array(
+            "puntos" => $ruta ? json_decode($ruta['puntos']) : array(),
+            "color" => $ruta ? $ruta['color'] : '#F27127'
+        ));
     }
 }
 ?>

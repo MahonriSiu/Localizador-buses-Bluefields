@@ -4,13 +4,18 @@ require_once(__DIR__ . "/../models/Bus.php");
 require_once(__DIR__ . "/../models/Emisor.php");
 require_once(__DIR__ . "/../models/Configuracion.php");
 require_once(__DIR__ . "/../models/SolicitudReseteo.php");
+require_once(__DIR__ . "/../models/UsuarioFinal.php");
+require_once(__DIR__ . "/../models/Resena.php");
 
+define('CORREO_ADMIN_PRINCIPAL', 'mahonrisiu@gmail.com');
 class AdminController {
     private $modeloUsuario;
     private $modeloBus;
     private $modeloEmisor;
     private $modeloConfiguracion;
     private $modeloSolicitud;
+    private $modeloUsuarioFinal;
+    private $modeloResena;
 
     public function __construct($conexion) {
         $this->modeloUsuario = new Usuario($conexion);
@@ -18,6 +23,8 @@ class AdminController {
         $this->modeloEmisor = new Emisor($conexion);
         $this->modeloConfiguracion = new Configuracion($conexion);
         $this->modeloSolicitud = new SolicitudReseteo($conexion);
+        $this->modeloUsuarioFinal = new UsuarioFinal($conexion);
+        $this->modeloResena = new Resena($conexion);
     }
 
     public function iniciarSesion($correo, $contrasena) {
@@ -30,7 +37,7 @@ class AdminController {
             session_regenerate_id(true);
             $_SESSION['admin_autenticado'] = true;
             $_SESSION['usuario_id'] = $usuario['id'];
-            echo json_encode(array("exito" => true));
+            echo json_encode(array("exito" => true, "debe_cambiar" => (bool)$usuario['debe_cambiar_contrasena']));
         } else {
             echo json_encode(array("exito" => false, "mensaje" => "Correo o contrasena incorrectos"));
         }
@@ -98,12 +105,15 @@ class AdminController {
         $this->verificarSesion();
         header("Content-Type: application/json");
 
+        $admins = $this->modeloUsuario->obtenerPorRol('admin');
         $auditores = $this->modeloUsuario->obtenerPorRol('auditor');
         $propietarios = $this->modeloUsuario->obtenerPorRol('propietario');
 
         echo json_encode(array(
+            "admins" => $admins,
             "auditores" => $auditores,
-            "propietarios" => $propietarios
+            "propietarios" => $propietarios,
+            "total_cuentas" => count($admins) + count($auditores) + count($propietarios)
         ));
     }
 
@@ -118,6 +128,20 @@ class AdminController {
     public function resetearContrasena($usuarioId) {
         $this->verificarSesion();
         header("Content-Type: application/json");
+
+        $objetivo = $this->modeloUsuario->obtenerPorId($usuarioId);
+        if (!$objetivo) {
+            echo json_encode(array("exito" => false, "mensaje" => "Usuario no encontrado"));
+            return;
+        }
+
+        if ($objetivo['rol'] === 'admin') {
+            $solicitante = $this->modeloUsuario->obtenerPorId($_SESSION['usuario_id']);
+            if (strtolower($solicitante['correo']) !== CORREO_ADMIN_PRINCIPAL) {
+                echo json_encode(array("exito" => false, "mensaje" => "Solo el administrador principal puede resetear la contrasena de otro admin"));
+                return;
+            }
+        }
 
         $nuevaContrasena = $this->generarContrasenaAleatoria();
         $this->modeloUsuario->cambiarContrasena($usuarioId, $nuevaContrasena);
@@ -145,7 +169,7 @@ class AdminController {
         echo json_encode(array("exito" => true));
     }
 
-    public function crearBus($nombre, $origen, $destino, $propietarioId) {
+    public function crearBus($nombre, $origen, $destino, $descripcion, $propietarioId) {
         $this->verificarSesion();
         header("Content-Type: application/json");
 
@@ -159,7 +183,7 @@ class AdminController {
             return;
         }
 
-        $busId = $this->modeloBus->crear($nombre, $origen, $destino, $propietarioId);
+        $busId = $this->modeloBus->crear($nombre, $origen, $destino, $descripcion, $propietarioId);
         $codigo = $this->modeloEmisor->crear($busId);
 
         echo json_encode(array("exito" => true, "bus_id" => $busId, "codigo_acceso" => $codigo));
@@ -203,6 +227,81 @@ class AdminController {
 
         $config = $this->modeloConfiguracion->obtener();
         echo json_encode(array("exito" => true, "config" => $config));
+    }
+
+    public function obtenerCodigoEmisor($busId) {
+        $this->verificarSesion();
+        header("Content-Type: application/json");
+
+        $emisor = $this->modeloEmisor->obtenerPorBus($busId);
+        if ($emisor) {
+            echo json_encode(array("exito" => true, "codigo" => $emisor['codigo_acceso']));
+        } else {
+            echo json_encode(array("exito" => false, "mensaje" => "Este bus no tiene codigo asignado"));
+        }
+    }
+
+    public function regenerarCodigoEmisor($busId) {
+        $this->verificarSesion();
+        header("Content-Type: application/json");
+
+        $codigo = $this->modeloEmisor->regenerarCodigo($busId);
+        echo json_encode(array("exito" => true, "codigo" => $codigo));
+    }
+
+    public function obtenerUsuariosFinales() {
+        $this->verificarSesion();
+        header("Content-Type: application/json");
+
+        $usuarios = $this->modeloUsuarioFinal->obtenerTodos();
+        echo json_encode(array("usuarios" => $usuarios));
+    }
+    
+        public function obtenerHistorialAccesos() {
+        $this->verificarSesion();
+        header("Content-Type: application/json");
+
+        $modeloRegistro = new RegistroAcceso($GLOBALS['conexion']);
+        echo json_encode(array("historial" => $modeloRegistro->obtenerHistorialUsuariosFinales()));
+    }
+
+    public function obtenerResenas() {
+        $this->verificarSesion();
+        header("Content-Type: application/json");
+
+        $resenas = $this->modeloResena->obtenerTodas();
+        echo json_encode(array("resenas" => $resenas));
+    }
+    
+            public function guardarRutaBus($busId, $puntosJson, $color) {
+        $this->verificarSesion();
+        header("Content-Type: application/json");
+
+        require_once(__DIR__ . "/../models/RutaBus.php");
+        $modeloRuta = new RutaBus($GLOBALS['conexion']);
+
+        if ($busId <= 0 || trim($puntosJson) === '') {
+            echo json_encode(array("exito" => false, "mensaje" => "Faltan datos de la ruta"));
+            return;
+        }
+
+        $colorFinal = preg_match('/^#[0-9A-Fa-f]{6}$/', $color) ? $color : '#F27127';
+        $modeloRuta->guardar($busId, $puntosJson, $colorFinal);
+        echo json_encode(array("exito" => true));
+    }
+
+    public function obtenerRutaBusAdmin($busId) {
+        $this->verificarSesion();
+        header("Content-Type: application/json");
+
+        require_once(__DIR__ . "/../models/RutaBus.php");
+        $modeloRuta = new RutaBus($GLOBALS['conexion']);
+        $ruta = $modeloRuta->obtenerPorBus($busId);
+
+        echo json_encode(array(
+            "puntos" => $ruta ? json_decode($ruta['puntos']) : array(),
+            "color" => $ruta ? $ruta['color'] : '#F27127'
+        ));
     }
 }
 ?>

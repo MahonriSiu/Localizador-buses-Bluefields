@@ -1,4 +1,4 @@
-<?php require_once __DIR__ . '/../../../config/rutas.php'; ?>
+<?php require_once __DIR__ . '/../../../config/rutas.php'; $paginaActiva = 'panel'; ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -9,13 +9,7 @@
 </head>
 <body>
 
-    <div class="encabezado">
-        <h1>Panel del Administrador</h1>
-        <div>
-            <a href="<?php echo URL_BASE; ?>/admin/gestion.php" style="color: #fff; margin-right: 16px;">Gestion</a>
-            <a href="<?php echo URL_BASE; ?>/admin/cuentas.php" style="color: #fff;">Cuentas</a>
-        </div>
-    </div>
+    <?php require __DIR__ . '/../partials/encabezado_admin.php'; ?>
 
     <div class="contenedor">
         <div class="grid-estadisticas">
@@ -35,13 +29,47 @@
 
         <div class="tarjeta">
             <h2>Accesos rapidos</h2>
-            <a href="<?php echo URL_BASE; ?>/admin/gestion.php" class="boton boton-primario" style="margin-right: 10px;">Gestionar rutas y buses</a>
-            <a href="<?php echo URL_BASE; ?>/admin/cuentas.php" class="boton boton-secundario" style="margin-right: 10px;">Gestionar cuentas</a>
-            <a href="<?php echo URL_BASE; ?>/index.php" class="boton boton-secundario" target="_blank">Ver mapa publico</a>
-        </div>
-    </div>
+            <div class="grid-accesos">
+                <a href="<?php echo URL_BASE; ?>/admin/gestion.php" class="acceso-tarjeta">
+                    <span class="icono-grande">🚌</span>
+                    <span class="titulo">Gestion de buses</span>
+                </a>
+                <a href="<?php echo URL_BASE; ?>/admin/cuentas.php" class="acceso-tarjeta">
+                    <span class="icono-grande">👤</span>
+                    <span class="titulo">Cuentas</span>
+                </a>
+                <a href="<?php echo URL_BASE; ?>/admin/usuarios.php" class="acceso-tarjeta">
+                    <span class="icono-grande">📋</span>
+                    <span class="titulo">Usuarios registrados</span>
+                </a>
+                <a href="<?php echo URL_BASE; ?>/admin/ruta-creativa.php" class="acceso-tarjeta">
+                    <span class="icono-grande">📅</span>
+                    <span class="titulo">Eventos y Circuitos</span>
+                </a>
+                <a href="<?php echo URL_BASE; ?>/admin/anuncios.php" class="acceso-tarjeta">
+                    <span class="icono-grande">📣</span>
+                    <span class="titulo">Anuncios</span>
+                </a>
+                <a href="<?php echo URL_BASE; ?>/admin/trazar-ruta.php" class="acceso-tarjeta">
+                    <span class="icono-grande">📍</span>
+                    <span class="titulo">Marcar puntos de eventos</span>
+                </a>
+                <a href="<?php echo URL_BASE; ?>/admin/resenas.php" class="acceso-tarjeta">
+                    <span class="icono-grande">💬</span>
+                    <span class="titulo">Reseñas</span>
+                </a>
+                <a href="<?php echo URL_BASE; ?>/admin/mapa.php" class="acceso-tarjeta">
+                    <span class="icono-grande">🗺️</span>
+                    <span class="titulo">Mapa 24/7</span>
+                </a>
+                <a href="<?php echo URL_BASE; ?>/index.php" class="acceso-tarjeta" target="_blank">
+                    <span class="icono-grande">🌐</span>
+                    <span class="titulo">Mapa publico</span>
+                </a>
+            </div>
 
     <script src="<?php echo URL_BASE; ?>/asset.php?tipo=js&archivo=utilidades.js"></script>
     <script src="<?php echo URL_BASE; ?>/asset.php?tipo=js&archivo=admin.js"></script>
+    <script src="<?php echo URL_BASE; ?>/asset.php?tipo=js&archivo=perfil.js"></script>
 </body>
 </html>

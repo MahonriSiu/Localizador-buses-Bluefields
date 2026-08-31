@@ -4,48 +4,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MiBus - Registro</title>
+    <title>MiBus - Acceso</title>
     <link rel="stylesheet" href="<?php echo URL_BASE; ?>/asset.php?tipo=css&archivo=estilos.css">
 </head>
 <body>
 
-    <div class="contenedor-angosto">
-        <div class="tarjeta">
-            <img src="<?php echo URL_BASE; ?>/asset.php?tipo=img&archivo=logo.png" style="width: 80px; display: block; margin: 0 auto 16px;">
-            <h2>Registrate para usar MiBus</h2>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 16px;">
-                El registro es obligatorio para ver la ubicacion de los buses.
-            </p>
-            <div id="mensaje-registro"></div>
+    <div class="auth-pagina">
+        <div class="auth-marca">
+            <img src="<?php echo URL_BASE; ?>/asset.php?tipo=img&archivo=logo.png" class="auth-marca-logo">
+            <h1>MiBus</h1>
+            <p>Mira por donde viene tu bus antes de salir de casa.</p>
+            <span class="auth-marca-pulso"><span class="pulso-vivo"></span> Rastreo en tiempo real</span>
+        </div>
 
-            <div class="campo-formulario">
-                <label>Nombre</label>
-                <input type="text" id="nombre">
-            </div>
+        <div class="auth-formulario-lado">
+            <div class="auth-formulario-caja">
+                <h2>Bienvenido de vuelta</h2>
+                <p class="auth-subtitulo">Ingresa con tu numero de telefono.</p>
+                <div id="mensaje-registro"></div>
 
-            <div class="campo-formulario">
-                <label>Numero de telefono</label>
-                <div class="grupo-telefono">
-                    <span class="prefijo-telefono">🇳🇮 +505</span>
-                    <input type="tel" id="telefono" placeholder="0000-0000" maxlength="9">
-                </div>
-            </div>
-
-            <button class="boton boton-primario boton-bloque" onclick="registrarse()">Registrarme</button>
-
-            <p style="margin-top: 16px; text-align: center; font-size: 13px;">
-                Ya tienes cuenta? <a href="#" onclick="mostrarLogin(); return false;" style="color: #0f766e; font-weight: 600;">Inicia sesion</a>
-            </p>
-
-            <div id="bloque-login" style="display: none; margin-top: 16px; border-top: 1px solid #e5e7eb; padding-top: 16px;">
-                <div class="campo-formulario">
-                    <label>Numero de telefono</label>
-                    <div class="grupo-telefono">
-                        <span class="prefijo-telefono">🇳🇮 +505</span>
-                        <input type="tel" id="telefono-login" placeholder="0000-0000" maxlength="9">
+                <div id="bloque-inicio">
+                    <div class="campo-formulario">
+                        <label>Numero de telefono</label>
+                        <div class="grupo-telefono">
+                            <span class="prefijo-telefono">🇳🇮 +505</span>
+                            <input type="tel" id="telefono-login" placeholder="0000-0000" maxlength="9">
+                        </div>
                     </div>
+                    <button class="boton boton-primario boton-bloque" onclick="iniciarSesion()">Ingresar</button>
+
+                    <p style="margin-top: 16px; text-align: center; font-size: 13px;">
+                        No tienes cuenta? <a href="#" onclick="mostrarRegistro(); return false;" style="color: var(--color-primario); font-weight: 600;">Registrate</a>
+                    </p>
                 </div>
-                <button class="boton boton-secundario boton-bloque" onclick="iniciarSesion()">Ingresar</button>
+
+                <div id="bloque-registro" style="display: none;">
+                    <div class="campo-formulario">
+                        <label>Nombre</label>
+                        <input type="text" id="nombre">
+                    </div>
+
+                    <div class="campo-formulario">
+                        <label>Numero de telefono</label>
+                        <div class="grupo-telefono">
+                            <span class="prefijo-telefono">🇳🇮 +505</span>
+                            <input type="tel" id="telefono" placeholder="0000-0000" maxlength="9">
+                        </div>
+                    </div>
+
+                    <button class="boton boton-primario boton-bloque" onclick="registrarse()">Registrarme</button>
+
+                    <p style="margin-top: 16px; text-align: center; font-size: 13px;">
+                        Ya tienes cuenta? <a href="#" onclick="mostrarLogin(); return false;" style="color: var(--color-primario); font-weight: 600;">Inicia sesion</a>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
@@ -77,7 +89,11 @@
             });
 
             if (resultado.exito) {
-                window.location.href = URL_BASE + "/usuario/index.php";
+                // respaldo ademas del parametro ?nuevo=1 en la url: si algo interrumpe
+                // la cadena de redireccion (o el navegador recorta la query string),
+                // esta bandera igual dispara el tutorial en la siguiente pantalla.
+                sessionStorage.setItem("mibus_es_nuevo", "1");
+                window.location.href = URL_BASE + "/usuario/index.php?nuevo=1";
             } else {
                 mostrarMensaje("mensaje-registro", resultado.mensaje, true);
             }
@@ -97,8 +113,14 @@
             }
         }
 
+        function mostrarRegistro() {
+            document.getElementById("bloque-inicio").style.display = "none";
+            document.getElementById("bloque-registro").style.display = "block";
+        }
+
         function mostrarLogin() {
-            document.getElementById("bloque-login").style.display = "block";
+            document.getElementById("bloque-registro").style.display = "none";
+            document.getElementById("bloque-inicio").style.display = "block";
         }
     </script>
 </body>

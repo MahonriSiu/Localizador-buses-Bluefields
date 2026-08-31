@@ -43,10 +43,8 @@
             });
 
             if (resultado.exito) {
-                const destino = document.referrer.includes("propietario")
-                    ? URL_BASE + "/propietario/panel.php"
-                    : URL_BASE + "/auditor/panel.php";
-                window.location.href = destino;
+                const destinos = { admin: "/admin/panel.php", auditor: "/auditor/panel.php", propietario: "/propietario/panel.php" };
+                window.location.href = URL_BASE + destinos[resultado.rol];
             } else {
                 mostrarMensaje("mensaje-cambio", resultado.mensaje, true);
             }

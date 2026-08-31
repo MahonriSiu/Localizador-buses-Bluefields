@@ -15,7 +15,6 @@ class Bus {
         return $resultado->fetch_assoc();
     }
 
-    // esta la usa el admin y el auditor, ven todos sin importar si estan habilitados
     public function obtenerTodosCompletos() {
         $sql = "SELECT buses.*, usuarios.nombre AS nombre_propietario FROM buses
                 LEFT JOIN usuarios ON buses.propietario_id = usuarios.id
@@ -38,9 +37,8 @@ class Bus {
         return $buses;
     }
 
-    // esta es la que ve el usuario final, solo los que el admin dejo habilitados
     public function obtenerPublicos() {
-        $sql = "SELECT id, nombre, origen, destino FROM buses WHERE habilitado = 1";
+        $sql = "SELECT id, nombre, origen, destino, descripcion FROM buses WHERE habilitado = 1";
         $resultado = $this->conexion->query($sql);
         $buses = array();
         while ($fila = $resultado->fetch_assoc()) {
@@ -69,11 +67,10 @@ class Bus {
         return $stmt->execute();
     }
 
-    // crea el bus con todo de una vez: nombre, ruta que sigue, y dueno
-    public function crear($nombre, $origen, $destino, $propietarioId) {
-        $sql = "INSERT INTO buses (nombre, origen, destino, propietario_id, habilitado) VALUES (?, ?, ?, ?, 1)";
+    public function crear($nombre, $origen, $destino, $descripcion, $propietarioId) {
+        $sql = "INSERT INTO buses (nombre, origen, destino, descripcion, propietario_id, habilitado) VALUES (?, ?, ?, ?, ?, 1)";
         $stmt = $this->conexion->prepare($sql);
-        $stmt->bind_param("sssi", $nombre, $origen, $destino, $propietarioId);
+        $stmt->bind_param("ssssi", $nombre, $origen, $destino, $descripcion, $propietarioId);
         $stmt->execute();
         return $this->conexion->insert_id;
     }

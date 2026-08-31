@@ -28,7 +28,7 @@ class EmisorController {
         }
     }
 
-    // el emisor manda esto cada 5 segundos mientras el bus esta en ruta
+    // usado por el celular del chofer, requiere sesion activa
     public function actualizarPosicion($lat, $lng) {
         session_start();
         header("Content-Type: application/json");
@@ -41,6 +41,26 @@ class EmisorController {
         $busId = $_SESSION['bus_id'];
         $this->modeloBus->actualizarPosicion($busId, $lat, $lng);
         $this->modeloHistorial->registrar($busId, $lat, $lng);
+
+        echo json_encode(array("exito" => true));
+    }
+
+    public function actualizarPosicionPorCodigo($codigo, $lat, $lng) {
+        header("Content-Type: application/json");
+
+        if (trim($codigo) === '' || $lat == 0 || $lng == 0) {
+            echo json_encode(array("exito" => false, "mensaje" => "Faltan datos: codigo, lat y lng son obligatorios"));
+            return;
+        }
+
+        $emisor = $this->modeloEmisor->verificarCodigo($codigo);
+        if (!$emisor) {
+            echo json_encode(array("exito" => false, "mensaje" => "Codigo invalido"));
+            return;
+        }
+
+        $this->modeloBus->actualizarPosicion($emisor['bus_id'], $lat, $lng);
+        $this->modeloHistorial->registrar($emisor['bus_id'], $lat, $lng);
 
         echo json_encode(array("exito" => true));
     }

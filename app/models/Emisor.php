@@ -16,7 +16,6 @@ class Emisor {
     }
 
     public function crear($busId) {
-        // genero un codigo simple de 6 caracteres, facil de escribir para el que maneja el bus
         $codigo = strtoupper(substr(md5(uniqid()), 0, 6));
         $sql = "INSERT INTO emisores (codigo_acceso, bus_id) VALUES (?, ?)";
         $stmt = $this->conexion->prepare($sql);
@@ -25,7 +24,6 @@ class Emisor {
         return $codigo;
     }
 
-    // el admin necesita ver el codigo de un bus especifico si se pierde
     public function obtenerPorBus($busId) {
         $sql = "SELECT * FROM emisores WHERE bus_id = ?";
         $stmt = $this->conexion->prepare($sql);
@@ -35,8 +33,28 @@ class Emisor {
         return $resultado->fetch_assoc();
     }
 
+    // si el chofer perdio el codigo, esto genera uno nuevo sin tener que crear un bus nuevo
+    public function regenerarCodigo($busId) {
+        $existente = $this->obtenerPorBus($busId);
+        $codigo = strtoupper(substr(md5(uniqid()), 0, 6));
+
+        if ($existente) {
+            $sql = "UPDATE emisores SET codigo_acceso = ? WHERE bus_id = ?";
+            $stmt = $this->conexion->prepare($sql);
+            $stmt->bind_param("si", $codigo, $busId);
+            $stmt->execute();
+        } else {
+            $sql = "INSERT INTO emisores (codigo_acceso, bus_id) VALUES (?, ?)";
+            $stmt = $this->conexion->prepare($sql);
+            $stmt->bind_param("si", $codigo, $busId);
+            $stmt->execute();
+        }
+
+        return $codigo;
+    }
+
     public function obtenerTodosConBus() {
-        $sql = "SELECT emisores.*, buses.ruta_id FROM emisores
+        $sql = "SELECT emisores.*, buses.nombre FROM emisores
                 JOIN buses ON emisores.bus_id = buses.id";
         $resultado = $this->conexion->query($sql);
         $lista = array();

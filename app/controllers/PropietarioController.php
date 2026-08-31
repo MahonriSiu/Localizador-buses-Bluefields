@@ -24,6 +24,7 @@ class PropietarioController {
             session_regenerate_id(true);
             $_SESSION['propietario_autenticado'] = true;
             $_SESSION['propietario_id'] = $usuario['id'];
+            $_SESSION['usuario_id'] = $usuario['id'];
             echo json_encode(array("exito" => true, "debe_cambiar" => (bool)$usuario['debe_cambiar_contrasena']));
         } else {
             echo json_encode(array("exito" => false, "mensaje" => "Correo o contrasena incorrectos"));

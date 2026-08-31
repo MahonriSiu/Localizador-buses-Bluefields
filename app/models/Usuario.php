@@ -20,7 +20,6 @@ class Usuario {
         return null;
     }
 
-    // el admin siempre crea con la contrasena por defecto, el usuario la cambia despues
     public function crearConHistorialVisible($nombre, $correo, $contrasenaPlano, $rol) {
         $hash = password_hash($contrasenaPlano, PASSWORD_DEFAULT);
         $sql = "INSERT INTO usuarios (nombre, correo, contrasena, rol, debe_cambiar_contrasena) VALUES (?, ?, ?, ?, TRUE)";
@@ -36,7 +35,6 @@ class Usuario {
         return $nuevoId;
     }
 
-    // esta la usa el admin cuando resetea desde su panel
     public function cambiarContrasena($usuarioId, $contrasenaNuevaPlano) {
         $usuario = $this->obtenerPorId($usuarioId);
         if (!$usuario) return false;
@@ -54,7 +52,7 @@ class Usuario {
         return true;
     }
 
-    // esta la usa el usuario mismo, pidiendo su contrasena actual primero
+    // el admin nunca queda en el historial en texto plano, sin importar quien cambie su contrasena
     public function cambiarContrasenaPropia($usuarioId, $contrasenaActual, $contrasenaNueva) {
         $usuario = $this->obtenerPorId($usuarioId);
         if (!$usuario) return "usuario_no_encontrado";
@@ -125,6 +123,20 @@ class Usuario {
             $usuarios[] = $fila;
         }
         return $usuarios;
+    }
+
+    public function actualizarNombre($id, $nombre) {
+        $sql = "UPDATE usuarios SET nombre = ? WHERE id = ?";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bind_param("si", $nombre, $id);
+        return $stmt->execute();
+    }
+
+    public function actualizarFotoPerfil($id, $rutaFoto) {
+        $sql = "UPDATE usuarios SET foto_perfil = ? WHERE id = ?";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bind_param("si", $rutaFoto, $id);
+        return $stmt->execute();
     }
 }
 ?>

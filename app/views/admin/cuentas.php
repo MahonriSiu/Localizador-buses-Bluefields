@@ -1,4 +1,4 @@
-<?php require_once __DIR__ . '/../../../config/rutas.php'; ?>
+<?php require_once __DIR__ . '/../../../config/rutas.php'; $paginaActiva = 'cuentas'; ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -9,20 +9,24 @@
 </head>
 <body>
 
-    <div class="encabezado">
-        <h1>Gestion de Cuentas</h1>
-        <a href="<?php echo URL_BASE; ?>/admin/panel.php" style="color: #fff;">Volver al panel</a>
-    </div>
+    <?php require __DIR__ . '/../partials/encabezado_admin.php'; ?>
 
     <div class="contenedor">
+        <div class="grid-estadisticas">
+            <div class="tarjeta-estadistica">
+                <div class="numero" id="total-cuentas">-</div>
+                <div class="etiqueta">Cuentas totales del sistema</div>
+            </div>
+        </div>
+
         <div class="tarjeta">
             <h2>Solicitudes de reseteo pendientes</h2>
-            <table class="tabla-panel">
-                <thead>
-                    <tr><th>Correo</th><th>Fecha</th><th>Accion</th></tr>
-                </thead>
-                <tbody id="cuerpo-tabla-solicitudes"></tbody>
-            </table>
+            <div class="tabla-panel-scroll">
+                <table class="tabla-panel">
+                    <thead><tr><th>Correo</th><th>Fecha</th><th>Accion</th></tr></thead>
+                    <tbody id="cuerpo-tabla-solicitudes"></tbody>
+                </table>
+            </div>
         </div>
 
         <div class="tarjeta">
@@ -52,27 +56,38 @@
         </div>
 
         <div class="tarjeta">
+            <h2>Administradores</h2>
+            <div class="tabla-panel-scroll">
+                <table class="tabla-panel">
+                    <thead><tr><th>Nombre</th><th>Correo</th><th>Resetear</th></tr></thead>
+                    <tbody id="cuerpo-tabla-admins"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="tarjeta">
             <h2>Auditores</h2>
-            <table class="tabla-panel">
-                <thead>
-                    <tr><th>Nombre</th><th>Correo</th><th>Historial</th><th>Resetear</th></tr>
-                </thead>
-                <tbody id="cuerpo-tabla-auditores"></tbody>
-            </table>
+            <div class="tabla-panel-scroll">
+                <table class="tabla-panel">
+                    <thead><tr><th>Nombre</th><th>Correo</th><th>Historial</th><th>Resetear</th></tr></thead>
+                    <tbody id="cuerpo-tabla-auditores"></tbody>
+                </table>
+            </div>
         </div>
 
         <div class="tarjeta">
             <h2>Propietarios</h2>
-            <table class="tabla-panel">
-                <thead>
-                    <tr><th>Nombre</th><th>Correo</th><th>Historial</th><th>Resetear</th></tr>
-                </thead>
-                <tbody id="cuerpo-tabla-propietarios"></tbody>
-            </table>
+            <div class="tabla-panel-scroll">
+                <table class="tabla-panel">
+                    <thead><tr><th>Nombre</th><th>Correo</th><th>Historial</th><th>Resetear</th></tr></thead>
+                    <tbody id="cuerpo-tabla-propietarios"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script src="<?php echo URL_BASE; ?>/asset.php?tipo=js&archivo=utilidades.js"></script>
     <script src="<?php echo URL_BASE; ?>/asset.php?tipo=js&archivo=admin.js"></script>
+    <script src="<?php echo URL_BASE; ?>/asset.php?tipo=js&archivo=perfil.js"></script>
 </body>
 </html>

@@ -20,11 +20,19 @@ class Configuracion {
         return $stmt->execute();
     }
 
-    // esto lo usa la vista publica para saber si mostrar el mapa o el mensaje de reposo
     public function estaDentroDeHorario() {
         $config = $this->obtener();
+        $apertura = $config['hora_apertura'];
+        $cierre = $config['hora_cierre'];
         $horaActual = date("H:i:s");
-        return ($horaActual >= $config['hora_apertura'] && $horaActual <= $config['hora_cierre']);
+
+        // horario normal dentro del mismo dia, ej: 06:00 a 21:00
+        if ($apertura <= $cierre) {
+            return ($horaActual >= $apertura && $horaActual <= $cierre);
+        }
+
+        // horario que cruza la medianoche, ej: 22:00 a 05:00
+        return ($horaActual >= $apertura || $horaActual <= $cierre);
     }
 }
 ?>

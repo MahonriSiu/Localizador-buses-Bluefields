@@ -1,4 +1,4 @@
-<?php require_once __DIR__ . '/../../../config/rutas.php'; ?>
+<?php require_once __DIR__ . '/../../../config/rutas.php'; $paginaActiva = 'panel'; ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -9,22 +9,21 @@
 </head>
 <body>
 
-    <div class="encabezado">
-        <h1>Mis Buses</h1>
-    </div>
+    <?php require __DIR__ . '/../partials/encabezado_propietario.php'; ?>
 
     <div class="contenedor">
         <div class="tarjeta">
-            <table class="tabla-panel">
-                <thead>
-                    <tr><th>Bus</th><th>Ruta</th><th>Estado</th><th>Ultima actualizacion</th></tr>
-                </thead>
-                <tbody id="cuerpo-tabla-buses"></tbody>
-            </table>
+            <div class="tabla-panel-scroll">
+                <table class="tabla-panel">
+                    <thead><tr><th>Bus</th><th>Ruta</th><th>Estado</th><th>Ultima actualizacion</th></tr></thead>
+                    <tbody id="cuerpo-tabla-buses"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script src="<?php echo URL_BASE; ?>/asset.php?tipo=js&archivo=utilidades.js"></script>
+    <script src="<?php echo URL_BASE; ?>/asset.php?tipo=js&archivo=perfil.js"></script>
     <script>
         const URL_BASE = "<?php echo URL_BASE; ?>";
 
@@ -37,13 +36,7 @@
                 const etiqueta = bus.activo == 1
                     ? "<span class='etiqueta-activo'>Transmitiendo</span>"
                     : "<span class='etiqueta-inactivo'>Sin transmitir</span>";
-
-                cuerpo.innerHTML += "<tr>" +
-                    "<td>" + bus.nombre + "</td>" +
-                    "<td>" + bus.origen + " - " + bus.destino + "</td>" +
-                    "<td>" + etiqueta + "</td>" +
-                    "<td>" + (bus.timestamp_actualizacion || "Sin datos") + "</td>" +
-                    "</tr>";
+                cuerpo.innerHTML += "<tr><td>" + bus.nombre + "</td><td>" + bus.origen + " - " + bus.destino + "</td><td>" + etiqueta + "</td><td>" + (bus.timestamp_actualizacion || "Sin datos") + "</td></tr>";
             });
         }
 

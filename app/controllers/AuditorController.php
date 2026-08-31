@@ -2,16 +2,22 @@
 require_once(__DIR__ . "/../models/Usuario.php");
 require_once(__DIR__ . "/../models/Bus.php");
 require_once(__DIR__ . "/../models/RegistroAcceso.php");
+require_once(__DIR__ . "/../models/UsuarioFinal.php");
+require_once(__DIR__ . "/../models/Resena.php");
 
 class AuditorController {
     private $modeloUsuario;
     private $modeloBus;
     private $modeloRegistroAcceso;
+    private $modeloUsuarioFinal;
+    private $modeloResena;
 
     public function __construct($conexion) {
         $this->modeloUsuario = new Usuario($conexion);
         $this->modeloBus = new Bus($conexion);
         $this->modeloRegistroAcceso = new RegistroAcceso($conexion);
+        $this->modeloUsuarioFinal = new UsuarioFinal($conexion);
+        $this->modeloResena = new Resena($conexion);
     }
 
     public function iniciarSesion($correo, $contrasena) {
@@ -52,6 +58,38 @@ class AuditorController {
             "usos_hoy" => $usosHoy,
             "buses" => $buses
         ));
+    }
+
+    public function obtenerBuses() {
+        $this->verificarSesion();
+        header("Content-Type: application/json");
+
+        $buses = $this->modeloBus->obtenerTodos();
+        echo json_encode(array("buses" => $buses));
+    }
+
+    public function obtenerUsuariosFinales() {
+        $this->verificarSesion();
+        header("Content-Type: application/json");
+
+        $usuarios = $this->modeloUsuarioFinal->obtenerTodos();
+        echo json_encode(array("usuarios" => $usuarios));
+    }
+    
+        public function obtenerHistorialAccesos() {
+        $this->verificarSesion();
+        header("Content-Type: application/json");
+
+        $modeloRegistro = new RegistroAcceso($GLOBALS['conexion']);
+        echo json_encode(array("historial" => $modeloRegistro->obtenerHistorialUsuariosFinales()));
+    }
+
+    public function obtenerResenas() {
+        $this->verificarSesion();
+        header("Content-Type: application/json");
+
+        $resenas = $this->modeloResena->obtenerTodas();
+        echo json_encode(array("resenas" => $resenas));
     }
 }
 ?>

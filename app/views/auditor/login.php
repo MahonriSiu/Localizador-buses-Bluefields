@@ -9,33 +9,43 @@
 </head>
 <body>
 
-    <div class="contenedor-angosto">
-        <div class="tarjeta">
-            <img src="<?php echo URL_BASE; ?>/asset.php?tipo=img&archivo=logo.png" style="width: 80px; display: block; margin: 0 auto 16px;">
-            <h2>Acceso Auditor</h2>
-            <div id="mensaje-login"></div>
+    <div class="auth-pagina">
+        <div class="auth-marca">
+            <img src="<?php echo URL_BASE; ?>/asset.php?tipo=img&archivo=logo.png" class="auth-marca-logo">
+            <h1>MiBus</h1>
+            <p>Supervision del sistema de buses de Bluefields.</p>
+            <span class="auth-marca-pulso"><span class="pulso-vivo"></span> Rastreo en tiempo real</span>
+            <span class="auth-marca-rol">Auditor</span>
+        </div>
 
-            <div class="campo-formulario">
-                <label>Correo</label>
-                <input type="email" id="correo">
-            </div>
-            <div class="campo-formulario">
-                <label>Contrasena</label>
-                <input type="password" id="contrasena">
-            </div>
-            <button class="boton boton-primario boton-bloque" onclick="iniciarSesion()">Ingresar</button>
+        <div class="auth-formulario-lado">
+            <div class="auth-formulario-caja">
+                <h2>Bienvenido de vuelta</h2>
+                <p class="auth-subtitulo">Ingresa con tu correo y contrasena de auditor.</p>
+                <div id="mensaje-login"></div>
 
-            <p style="margin-top: 16px; text-align: center; font-size: 13px;">
-                <a href="#" onclick="mostrarFormularioReseteo(); return false;" style="color: #0f766e;">Olvidaste tu contrasena?</a>
-            </p>
-
-            <div id="formulario-reseteo" style="display: none; margin-top: 16px; border-top: 1px solid #e5e7eb; padding-top: 16px;">
                 <div class="campo-formulario">
-                    <label>Tu correo</label>
-                    <input type="email" id="correo-reseteo">
+                    <label>Correo</label>
+                    <input type="email" id="correo">
                 </div>
-                <button class="boton boton-secundario boton-bloque" onclick="pedirReseteo()">Enviar solicitud al admin</button>
-                <div id="mensaje-reseteo"></div>
+                <div class="campo-formulario">
+                    <label>Contrasena</label>
+                    <input type="password" id="contrasena">
+                </div>
+                <button class="boton boton-primario boton-bloque" onclick="iniciarSesion()">Ingresar</button>
+
+                <p style="margin-top: 16px; text-align: center; font-size: 13px;">
+                    <a href="#" onclick="mostrarFormularioReseteo(); return false;" style="color: var(--color-primario);">Olvidaste tu contrasena?</a>
+                </p>
+
+                <div id="formulario-reseteo" style="display: none; margin-top: 16px; border-top: 1px solid #ece2d1; padding-top: 16px;">
+                    <div class="campo-formulario">
+                        <label>Tu correo</label>
+                        <input type="email" id="correo-reseteo">
+                    </div>
+                    <button class="boton boton-secundario boton-bloque" onclick="pedirReseteo()">Enviar solicitud al admin</button>
+                    <div id="mensaje-reseteo"></div>
+                </div>
             </div>
         </div>
     </div>

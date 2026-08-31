@@ -1,6 +1,4 @@
-// funciones compartidas entre las vistas, nada de esto depende de un rol especifico
-
-function calcularDistanciaKm(lat1, lng1, lat2, lng2) {
+ function calcularDistanciaKm(lat1, lng1, lat2, lng2) {
     const radioTierra = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLng = (lng2 - lng1) * Math.PI / 180;
@@ -59,3 +57,76 @@ function cambiarPestana(nombrePestana) {
     const seccionActiva = document.getElementById("seccion-" + nombrePestana);
     if (seccionActiva) seccionActiva.classList.remove("seccion-oculta");
 }
+
+function sonidoTransicion() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const ganancia = ctx.createGain();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(420, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(720, ctx.currentTime + 0.12);
+        osc.frequency.exponentialRampToValueAtTime(260, ctx.currentTime + 0.22);
+
+        ganancia.gain.setValueAtTime(0.001, ctx.currentTime);
+        ganancia.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.03);
+        ganancia.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.28);
+
+        osc.connect(ganancia);
+        ganancia.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.3);
+    } catch (error) { }
+}
+
+function transicionDom(callback) {
+    sonidoTransicion();
+    if (document.startViewTransition) {
+        document.startViewTransition(callback);
+    } else {
+        callback();
+    }
+}
+
+// anima un numero de "-" o un valor viejo hacia el valor nuevo, en vez de cambiarlo de golpe
+function animarNumero(elemento, valorFinal) {
+    if (!elemento) return;
+    const valorInicial = parseInt(elemento.textContent, 10) || 0;
+    const destino = parseInt(valorFinal, 10) || 0;
+    const duracion = 400;
+    const inicio = performance.now();
+
+    function paso(ahora) {
+        const progreso = Math.min((ahora - inicio) / duracion, 1);
+        const valorActual = Math.round(valorInicial + (destino - valorInicial) * progreso);
+        elemento.textContent = valorActual;
+        if (progreso < 1) requestAnimationFrame(paso);
+    }
+    requestAnimationFrame(paso);
+}
+
+document.addEventListener("click", function (evento) {
+    if (document.startViewTransition) return;
+
+    const enlace = evento.target.closest("a[href]");
+    if (!enlace) return;
+    if (enlace.target === "_blank" || enlace.hasAttribute("download")) return;
+
+    let destino;
+    try {
+        destino = new URL(enlace.href, window.location.href);
+    } catch (e) {
+        return;
+    }
+
+    if (destino.origin !== window.location.origin) return;
+    if (destino.href.split("#")[0] === window.location.href.split("#")[0]) return;
+
+    sonidoTransicion();
+    evento.preventDefault();
+    document.body.classList.add("pagina-saliendo");
+    setTimeout(function () {
+        window.location.href = enlace.href;
+    }, 150);
+});

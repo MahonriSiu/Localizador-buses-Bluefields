@@ -27,7 +27,6 @@ class HistorialPosicion {
         return array_reverse($puntos);
     }
 
-    // calcula la velocidad real del bus en los ultimos minutos, en km/h
     public function calcularVelocidadPromedio($busId, $limite = 10) {
         $sql = "SELECT lat, lng, fecha_hora FROM historial_posiciones
                 WHERE bus_id = ? ORDER BY fecha_hora DESC LIMIT ?";
@@ -78,6 +77,17 @@ class HistorialPosicion {
              sin($dLng / 2) * sin($dLng / 2);
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
         return $radioTierra * $c;
+    }
+
+    // fecha del primer registro de este bus, para saber si ya paso el periodo de aprendizaje
+    public function obtenerPrimerRegistro($busId) {
+        $sql = "SELECT MIN(fecha_hora) AS primera FROM historial_posiciones WHERE bus_id = ?";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bind_param("i", $busId);
+        $stmt->execute();
+        $resultado = $stmt->get_result();
+        $fila = $resultado->fetch_assoc();
+        return $fila['primera'];
     }
 }
 ?>

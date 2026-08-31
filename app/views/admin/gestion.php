@@ -1,4 +1,4 @@
-<?php require_once __DIR__ . '/../../../config/rutas.php'; ?>
+<?php require_once __DIR__ . '/../../../config/rutas.php'; $paginaActiva = 'gestion'; ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -9,10 +9,7 @@
 </head>
 <body>
 
-    <div class="encabezado">
-        <h1>Gestion</h1>
-        <a href="<?php echo URL_BASE; ?>/admin/panel.php">Volver al panel</a>
-    </div>
+    <?php require __DIR__ . '/../partials/encabezado_admin.php'; ?>
 
     <div class="contenedor">
         <div class="tarjeta">
@@ -34,7 +31,7 @@
         <div class="tarjeta">
             <h2>Crear bus</h2>
             <p style="font-size: 13px; color: #6b6255; margin-bottom: 12px;">
-                Cada bus se crea con su nombre, la ruta que sigue, y su dueno. Al crearlo se genera el codigo de acceso del emisor.
+                Cada bus se crea con su nombre, la ruta que sigue, una descripcion opcional, y su dueno.
             </p>
             <div id="mensaje-bus"></div>
             <div class="campo-formulario">
@@ -50,29 +47,36 @@
                 <input type="text" id="destino-bus" placeholder="Ej: Barrio Pointeen">
             </div>
             <div class="campo-formulario">
+                <label>Descripcion (opcional)</label>
+                <input type="text" id="descripcion-bus" placeholder="Ej: Bus articulado, pasa cada 20 min">
+            </div>
+            <div class="campo-formulario">
                 <label>Propietario</label>
                 <select id="propietario-bus"></select>
             </div>
             <button class="boton boton-primario"
-                onclick="crearBus(document.getElementById('nombre-bus').value, document.getElementById('origen-bus').value, document.getElementById('destino-bus').value, document.getElementById('propietario-bus').value)">
+                onclick="crearBus(document.getElementById('nombre-bus').value, document.getElementById('origen-bus').value, document.getElementById('destino-bus').value, document.getElementById('descripcion-bus').value, document.getElementById('propietario-bus').value)">
                 Crear bus
             </button>
         </div>
 
         <div class="tarjeta">
             <h2>Buses existentes</h2>
-            <table class="tabla-panel">
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Ruta</th>
-                        <th>Propietario</th>
-                        <th>Estado</th>
-                        <th>Accion</th>
-                    </tr>
-                </thead>
-                <tbody id="cuerpo-tabla-buses"></tbody>
-            </table>
+            <div class="tabla-panel-scroll">
+                <table class="tabla-panel">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Ruta</th>
+                            <th>Propietario</th>
+                            <th>Estado</th>
+                            <th>Accion</th>
+                            <th>Codigo Emisor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo-tabla-buses"></tbody>
+                </table>
+            </div>
         </div>
 
         <div class="tarjeta">
@@ -103,16 +107,19 @@
 
         <div class="tarjeta">
             <h2>Paradas del bus seleccionado</h2>
-            <table class="tabla-panel">
-                <thead>
-                    <tr><th>Nombre</th><th>Orden</th><th>Accion</th></tr>
-                </thead>
-                <tbody id="cuerpo-tabla-paradas"></tbody>
-            </table>
+            <div class="tabla-panel-scroll">
+                <table class="tabla-panel">
+                    <thead>
+                        <tr><th>Nombre</th><th>Orden</th><th>Accion</th></tr>
+                    </thead>
+                    <tbody id="cuerpo-tabla-paradas"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script src="<?php echo URL_BASE; ?>/asset.php?tipo=js&archivo=utilidades.js"></script>
     <script src="<?php echo URL_BASE; ?>/asset.php?tipo=js&archivo=admin.js"></script>
+    <script src="<?php echo URL_BASE; ?>/asset.php?tipo=js&archivo=perfil.js"></script>
 </body>
 </html>
