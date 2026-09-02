@@ -800,9 +800,9 @@ Esta evolución permitió contar con una mayor separación de responsabilidades 
 
 El proyecto contempla la incorporación de un video demostrativo donde se presentará la navegación general de MiBus y sus principales módulos.
 
-📌 **Enlace al video:** Próximamente.
+📌 **Enlace al video:** 
 
----
+---> https://youtube.com/shorts/-CSKuJAp6Yc?si=fTM7oMY8l992OZ1E
 
 # 👥 Equipo
 
