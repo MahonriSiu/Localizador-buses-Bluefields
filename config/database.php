@@ -17,7 +17,7 @@ if ($esLocal) {
 } else {
     $host = "sql211.infinityfree.com";
     $usuario = "if0_42523829";
-    $contrasena = "JustoSiu18";
+    $contrasena = "00000000";
     $basedatos = "if0_42523829_localizador";
 }
 
