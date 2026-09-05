@@ -117,14 +117,6 @@ class AdminController {
         ));
     }
 
-    public function verHistorialContrasenas($usuarioId) {
-        $this->verificarSesion();
-        header("Content-Type: application/json");
-
-        $historial = $this->modeloUsuario->obtenerHistorialContrasenas($usuarioId);
-        echo json_encode(array("exito" => true, "historial" => $historial));
-    }
-
     public function resetearContrasena($usuarioId) {
         $this->verificarSesion();
         header("Content-Type: application/json");
@@ -147,6 +139,38 @@ class AdminController {
         $this->modeloUsuario->cambiarContrasena($usuarioId, $nuevaContrasena);
 
         echo json_encode(array("exito" => true, "nueva_contrasena" => $nuevaContrasena));
+    }
+    
+        public function eliminarCuenta($usuarioId) {
+        $this->verificarSesion();
+        header("Content-Type: application/json");
+
+        $objetivo = $this->modeloUsuario->obtenerPorId($usuarioId);
+        if (!$objetivo) {
+            echo json_encode(array("exito" => false, "mensaje" => "Usuario no encontrado"));
+            return;
+        }
+
+        if (strtolower($objetivo['correo']) === CORREO_ADMIN_PRINCIPAL) {
+            echo json_encode(array("exito" => false, "mensaje" => "No se puede eliminar la cuenta principal"));
+            return;
+        }
+
+        if ($usuarioId == $_SESSION['usuario_id']) {
+            echo json_encode(array("exito" => false, "mensaje" => "No puedes eliminar tu propia cuenta mientras estas conectado"));
+            return;
+        }
+
+        if ($objetivo['rol'] === 'admin') {
+            $solicitante = $this->modeloUsuario->obtenerPorId($_SESSION['usuario_id']);
+            if (strtolower($solicitante['correo']) !== CORREO_ADMIN_PRINCIPAL) {
+                echo json_encode(array("exito" => false, "mensaje" => "Solo el administrador principal puede eliminar a otro admin"));
+                return;
+            }
+        }
+
+        $this->modeloUsuario->eliminar($usuarioId);
+        echo json_encode(array("exito" => true));
     }
 
     private function generarContrasenaAleatoria() {

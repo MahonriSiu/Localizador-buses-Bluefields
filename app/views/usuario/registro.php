@@ -10,11 +10,22 @@
 <body>
 
     <div class="auth-pagina">
-        <div class="auth-marca">
-            <img src="<?php echo URL_BASE; ?>/asset.php?tipo=img&archivo=logo.png" class="auth-marca-logo">
-            <h1>MiBus</h1>
-            <p>Mira por donde viene tu bus antes de salir de casa.</p>
-            <span class="auth-marca-pulso"><span class="pulso-vivo"></span> Rastreo en tiempo real</span>
+        <div class="auth-marca auth-marca-decorado">
+            <div class="decoracion-cielo">
+                <div class="nube nube1"></div>
+                <div class="nube nube2"></div>
+                <div class="nube nube3"></div>
+                <div class="hoja hoja1"></div>
+                <div class="hoja hoja2"></div>
+                <div class="colina"></div>
+            </div>
+
+            <div class="auth-marca-contenido">
+                <img src="<?php echo URL_BASE; ?>/asset.php?tipo=img&archivo=logo.png" class="auth-marca-logo">
+                <h1>MiBus</h1>
+                <p>Mira por donde viene tu bus antes de salir de casa.</p>
+                <span class="auth-marca-pulso"><span class="pulso-vivo"></span> Rastreo en tiempo real</span>
+            </div>
         </div>
 
         <div class="auth-formulario-lado">
@@ -89,9 +100,6 @@
             });
 
             if (resultado.exito) {
-                // respaldo ademas del parametro ?nuevo=1 en la url: si algo interrumpe
-                // la cadena de redireccion (o el navegador recorta la query string),
-                // esta bandera igual dispara el tutorial en la siguiente pantalla.
                 sessionStorage.setItem("mibus_es_nuevo", "1");
                 window.location.href = URL_BASE + "/usuario/index.php?nuevo=1";
             } else {

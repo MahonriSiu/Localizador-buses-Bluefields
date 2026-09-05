@@ -42,7 +42,8 @@ async function cargarCuentas() {
             cuerpoAdmins.innerHTML = "";
             resultado.admins.forEach(function (usuario) {
                 cuerpoAdmins.innerHTML += "<tr><td>" + usuario.nombre + "</td><td>" + usuario.correo + "</td>" +
-                    "<td><button class='boton boton-peligro' onclick='resetearContrasena(" + usuario.id + ")'>Resetear</button></td></tr>";
+                    "<td><button class='boton boton-peligro' onclick='resetearContrasena(" + usuario.id + ")'>Resetear</button> " +
+                    "<button class='boton boton-peligro' onclick='eliminarCuentaAdmin(" + usuario.id + ")'>Eliminar</button></td></tr>";
             });
         }
 
@@ -64,20 +65,19 @@ function filaCuenta(usuario) {
     return "<tr>" +
         "<td>" + usuario.nombre + "</td>" +
         "<td>" + usuario.correo + "</td>" +
-        "<td><button class='boton boton-secundario' onclick='verHistorial(" + usuario.id + ")'>Ver historial</button></td>" +
-        "<td><button class='boton boton-peligro' onclick='resetearContrasena(" + usuario.id + ")'>Resetear</button></td>" +
+        "<td><button class='boton boton-peligro' onclick='resetearContrasena(" + usuario.id + ")'>Resetear</button> " +
+        "<button class='boton boton-peligro' onclick='eliminarCuentaAdmin(" + usuario.id + ")'>Eliminar</button></td>" +
         "</tr>";
 }
 
-async function verHistorial(usuarioId) {
-    const resultado = await llamarApi(URL_BASE + "/admin_ver_historial.php", { usuario_id: usuarioId });
-    if (!resultado.exito || resultado.historial.length === 0) {
-        alert("Este usuario no tiene contrasenas anteriores registradas.");
-        return;
+async function eliminarCuentaAdmin(usuarioId) {
+    if (!confirm("Eliminar esta cuenta? Esta accion no se puede deshacer.")) return;
+    const resultado = await llamarApi(URL_BASE + "/admin_eliminar_cuenta.php", { usuario_id: usuarioId });
+    if (resultado.exito) {
+        cargarCuentas();
+    } else {
+        alert(resultado.mensaje);
     }
-    let texto = "Historial de contrasenas:\n\n";
-    resultado.historial.forEach(function (fila) { texto += fila.contrasena_anterior + "  (" + fila.fecha_cambio + ")\n"; });
-    alert(texto);
 }
 
 async function resetearContrasena(usuarioId) {
@@ -131,30 +131,36 @@ async function cargarBusesAdmin() {
     const cuerpoTabla = document.getElementById("cuerpo-tabla-buses");
     if (!cuerpoTabla) return;
 
-    transicionDom(function () {
-        if (!resultado.buses) {
-            cuerpoTabla.innerHTML = "<tr><td colspan='6'>" + (resultado.mensaje || "No se pudieron cargar los buses") + "</td></tr>";
-            return;
-        }
-        cuerpoTabla.innerHTML = "";
-        if (resultado.buses.length === 0) {
-            cuerpoTabla.innerHTML = "<tr><td colspan='6'>Aun no hay buses creados</td></tr>";
-            return;
-        }
+    if (!resultado.buses) {
+        cuerpoTabla.innerHTML = "<tr><td colspan='6'>" + (resultado.mensaje || "No se pudieron cargar los buses") + "</td></tr>";
+        return;
+    }
+    cuerpoTabla.innerHTML = "";
+    if (resultado.buses.length === 0) {
+        cuerpoTabla.innerHTML = "<tr><td colspan='6'>Aun no hay buses creados</td></tr>";
+        return;
+    }
 
-        resultado.buses.forEach(function (bus) {
-            const etiqueta = bus.habilitado == 1 ? "<span class='etiqueta-activo'>Habilitado</span>" : "<span class='etiqueta-inactivo'>Deshabilitado</span>";
-            cuerpoTabla.innerHTML += "<tr>" +
-                "<td>" + bus.nombre + "</td>" +
-                "<td>" + bus.origen + " - " + bus.destino + "</td>" +
-                "<td>" + (bus.nombre_propietario || "Sin dueno") + "</td>" +
-                "<td>" + etiqueta + "</td>" +
-                "<td><button class='boton boton-secundario' onclick='toggleBus(" + bus.id + ", " + (bus.habilitado == 1 ? 0 : 1) + ")'>Cambiar estado</button></td>" +
-                "<td><button class='boton boton-secundario' onclick='verCodigoEmisor(" + bus.id + ")'>Ver codigo</button> " +
-                "<button class='boton boton-peligro' onclick='regenerarCodigoEmisor(" + bus.id + ")'>Regenerar</button></td>" +
-                "</tr>";
-        });
+    resultado.buses.forEach(function (bus) {
+        const etiqueta = bus.habilitado == 1 ? "<span class='etiqueta-activo'>Habilitado</span>" : "<span class='etiqueta-inactivo'>Deshabilitado</span>";
+        cuerpoTabla.innerHTML += "<tr>" +
+            "<td>" + bus.nombre + "</td>" +
+            "<td>" + bus.origen + " - " + bus.destino + "</td>" +
+            "<td>" + (bus.nombre_propietario || "Sin dueno") + "</td>" +
+            "<td>" + etiqueta + "</td>" +
+            "<td><button class='boton boton-secundario' onclick='toggleBus(" + bus.id + ", " + (bus.habilitado == 1 ? 0 : 1) + ")'>Cambiar estado</button></td>" +
+            "<td><button class='boton boton-secundario' onclick='verCodigoEmisor(" + bus.id + ")'>Ver codigo</button> " +
+            "<button class='boton boton-peligro' onclick='regenerarCodigoEmisor(" + bus.id + ")'>Regenerar</button> " +
+            "<button class='boton boton-peligro' onclick='eliminarBusAdmin(" + bus.id + ")'>Eliminar</button></td>" +
+            "</tr>";
     });
+}
+
+async function eliminarBusAdmin(busId) {
+    if (!confirm("Eliminar este bus? Se borran tambien su historial de posiciones y su codigo de emisor.")) return;
+    await llamarApi(URL_BASE + "/admin_eliminar_bus.php", { id: busId });
+    cargarBusesAdmin();
+    cargarSelectorBusesParaParadas ? null : null;
 }
 
 async function verCodigoEmisor(busId) {
@@ -173,55 +179,6 @@ async function regenerarCodigoEmisor(busId) {
 async function toggleBus(id, nuevoEstado) {
     await llamarApi(URL_BASE + "/admin_toggle_bus.php", { id: id, habilitado: nuevoEstado });
     cargarBusesAdmin();
-}
-
-async function cargarSelectorBusesParaParadas() {
-    const resultado = await llamarApi(URL_BASE + "/admin_obtener_buses.php", {});
-    const selector = document.getElementById("bus-para-parada");
-    if (!selector || !resultado.buses) return;
-
-    selector.innerHTML = "";
-    resultado.buses.forEach(function (bus) {
-        const opcion = document.createElement("option");
-        opcion.value = bus.id;
-        opcion.textContent = bus.nombre;
-        selector.appendChild(opcion);
-    });
-    if (resultado.buses.length > 0) cargarParadasDelBus(resultado.buses[0].id);
-}
-
-async function agregarParada() {
-    const busId = document.getElementById("bus-para-parada").value;
-    const nombre = document.getElementById("nombre-parada").value;
-    const lat = document.getElementById("lat-parada").value;
-    const lng = document.getElementById("lng-parada").value;
-    const orden = document.getElementById("orden-parada").value;
-
-    const resultado = await llamarApi(URL_BASE + "/admin_agregar_parada.php", { bus_id: busId, nombre: nombre, lat: lat, lng: lng, orden: orden });
-    if (resultado.exito) {
-        mostrarMensaje("mensaje-paradas", "Parada agregada correctamente", false);
-        cargarParadasDelBus(busId);
-    }
-}
-
-async function cargarParadasDelBus(busId) {
-    const respuesta = await fetch(URL_BASE + "/admin_obtener_paradas.php?bus_id=" + busId);
-    const resultado = await respuesta.json();
-    const cuerpo = document.getElementById("cuerpo-tabla-paradas");
-    if (!cuerpo) return;
-
-    transicionDom(function () {
-        cuerpo.innerHTML = "";
-        resultado.paradas.forEach(function (parada) {
-            cuerpo.innerHTML += "<tr><td>" + parada.nombre + "</td><td>" + parada.orden + "</td>" +
-                "<td><button class='boton boton-peligro' onclick='eliminarParada(" + parada.id + ", " + busId + ")'>Eliminar</button></td></tr>";
-        });
-    });
-}
-
-async function eliminarParada(id, busId) {
-    await llamarApi(URL_BASE + "/admin_eliminar_parada.php", { id: id });
-    cargarParadasDelBus(busId);
 }
 
 let temporizadorHorario = null;
@@ -277,4 +234,5 @@ document.addEventListener("DOMContentLoaded", function () {
     if (document.getElementById("cuerpo-tabla-solicitudes")) cargarSolicitudes();
     if (document.getElementById("total-buses")) cargarResumen();
     if (document.getElementById("hora-apertura")) cargarHorarioActual();
+    if (document.getElementById("bus-para-parada")) cargarSelectorBusesParaParadas();
 });

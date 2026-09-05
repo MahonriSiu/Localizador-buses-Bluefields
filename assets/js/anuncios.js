@@ -14,36 +14,38 @@ async function mostrarSiguienteAnuncio() {
         return;
     }
 
-    const tocaExterno = EXTERNO_CONFIGURADO && Math.random() < 0.3;
-    if (tocaExterno) { mostrarAnuncioExterno(); return; }
+    try {
+        const candidato = await fetch(URL_BASE + "/obtener_anuncio.php");
+        const resultado = await candidato.json();
 
-    const candidato = await fetch(URL_BASE + "/obtener_anuncio.php");
-    const resultado = await candidato.json();
+        if (!resultado.hay_anuncio) {
+            programarSiguienteCiclo();
+            return;
+        }
 
-    if (!resultado.hay_anuncio) {
-        if (EXTERNO_CONFIGURADO) { mostrarAnuncioExterno(); } else { programarSiguienteCiclo(); }
-        return;
+        let anuncio = resultado.anuncio;
+        let intentos = 0;
+
+        while (anunciosVistosEnCiclo.includes(anuncio.id) && intentos < 6) {
+            const otro = await fetch(URL_BASE + "/obtener_anuncio.php");
+            const otroResultado = await otro.json();
+            if (!otroResultado.hay_anuncio) break;
+            anuncio = otroResultado.anuncio;
+            intentos++;
+        }
+
+        if (anunciosVistosEnCiclo.includes(anuncio.id)) {
+            anunciosVistosEnCiclo = [];
+        }
+
+        anunciosVistosEnCiclo.push(anuncio.id);
+        sessionStorage.setItem("mibus_anuncios_vistos", JSON.stringify(anunciosVistosEnCiclo));
+
+        mostrarModalAnuncio(anuncio);
+    } catch (error) {
+        console.error("MiBus anuncios: no se pudo cargar el anuncio", error);
+        programarSiguienteCiclo();
     }
-
-    let anuncio = resultado.anuncio;
-    let intentos = 0;
-
-    while (anunciosVistosEnCiclo.includes(anuncio.id) && intentos < 6) {
-        const otro = await fetch(URL_BASE + "/obtener_anuncio.php");
-        const otroResultado = await otro.json();
-        if (!otroResultado.hay_anuncio) break;
-        anuncio = otroResultado.anuncio;
-        intentos++;
-    }
-
-    if (anunciosVistosEnCiclo.includes(anuncio.id)) {
-        anunciosVistosEnCiclo = [];
-    }
-
-    anunciosVistosEnCiclo.push(anuncio.id);
-    sessionStorage.setItem("mibus_anuncios_vistos", JSON.stringify(anunciosVistosEnCiclo));
-
-    mostrarModalAnuncio(anuncio);
 }
 
 function mostrarModalAnuncio(anuncio) {
@@ -51,42 +53,47 @@ function mostrarModalAnuncio(anuncio) {
     if (temporizadorCierreAnuncio) clearTimeout(temporizadorCierreAnuncio);
 
     const modal = document.getElementById("modal-anuncio");
+    if (!modal) { console.error("MiBus anuncios: no existe #modal-anuncio en esta pagina"); cicloAnuncioActivo = false; return; }
+
     const media = document.getElementById("anuncio-media-grande");
     const botonCerrar = document.getElementById("anuncio-cerrar");
     const botonSonido = document.getElementById("anuncio-sonido");
+    const tituloEl = document.getElementById("anuncio-titulo-grande");
+    const textoEl = document.getElementById("anuncio-texto-grande");
 
-    document.getElementById("anuncio-titulo-grande").textContent = anuncio.nombre_negocio || "";
-    document.getElementById("anuncio-texto-grande").textContent =
-        [anuncio.texto, anuncio.telefono].filter(Boolean).join(" · ");
+    if (tituloEl) tituloEl.textContent = anuncio.nombre_negocio || "";
+    if (textoEl) textoEl.textContent = [anuncio.texto, anuncio.telefono].filter(Boolean).join(" · ");
 
-    botonCerrar.classList.remove("visible");
-    botonSonido.classList.remove("visible");
-    media.innerHTML = "";
+    if (botonCerrar) botonCerrar.classList.remove("visible");
+    if (botonSonido) botonSonido.classList.remove("visible");
+
     audioAnuncioActual = null;
-
     let esVideo = false;
     let hayAudio = false;
     let videoElemento = null;
 
-    if (anuncio.tipo_media === 'imagen' && anuncio.url_media) {
-        media.innerHTML = "<img src='" + URL_BASE + "/asset.php?tipo=anuncio&archivo=" + anuncio.url_media + "' alt=''>";
-    } else if (anuncio.tipo_media === 'video' && anuncio.url_media) {
-        esVideo = true;
-        hayAudio = true;
-        media.innerHTML = "<video id='video-anuncio-actual' src='" + URL_BASE + "/asset.php?tipo=anuncio&archivo=" + anuncio.url_media + "' autoplay muted loop playsinline preload='auto'></video>";
-        videoElemento = media.querySelector("video");
-    } else {
-        media.innerHTML = "<div class='anuncio-media-vacia'>📣</div>";
+    if (media) {
+        media.innerHTML = "";
+
+        if (anuncio.tipo_media === 'imagen' && anuncio.url_media) {
+            media.innerHTML = "<img src='" + URL_BASE + "/asset.php?tipo=anuncio&archivo=" + anuncio.url_media + "' alt=''>";
+        } else if (anuncio.tipo_media === 'video' && anuncio.url_media) {
+            esVideo = true;
+            hayAudio = true;
+            media.innerHTML = "<video id='video-anuncio-actual' src='" + URL_BASE + "/asset.php?tipo=anuncio&archivo=" + anuncio.url_media + "' autoplay muted loop playsinline preload='auto'></video>";
+            videoElemento = media.querySelector("video");
+        } else {
+            media.innerHTML = "<div class='anuncio-media-vacia'>📣</div>";
+        }
     }
 
-    // audio separado (independiente de si hay imagen o no)
     if (anuncio.url_audio) {
         hayAudio = true;
         audioAnuncioActual = new Audio(URL_BASE + "/asset.php?tipo=anuncio-audio&archivo=" + anuncio.url_audio);
         audioAnuncioActual.loop = true;
     }
 
-    if (hayAudio) {
+    if (hayAudio && botonSonido) {
         botonSonido.classList.add("visible");
         botonSonido.textContent = "🔇";
         botonSonido.onclick = function () { alternarSonidoAnuncio(videoElemento); };
@@ -95,7 +102,7 @@ function mostrarModalAnuncio(anuncio) {
     modal.classList.add("visible");
 
     setTimeout(function () {
-        botonCerrar.classList.add("visible");
+        if (botonCerrar) botonCerrar.classList.add("visible");
     }, 6000);
 
     if (!esVideo) {
@@ -114,30 +121,25 @@ function mostrarModalAnuncio(anuncio) {
 
 function alternarSonidoAnuncio(videoElemento) {
     const boton = document.getElementById("anuncio-sonido");
+    if (!boton) return;
     const activo = boton.textContent === "🔇";
 
-    if (videoElemento) {
-        videoElemento.muted = !activo;
-    }
+    if (videoElemento) videoElemento.muted = !activo;
     if (audioAnuncioActual) {
         if (activo) audioAnuncioActual.play().catch(function () {});
         else audioAnuncioActual.pause();
     }
-
     boton.textContent = activo ? "🔊" : "🔇";
-}
-
-function mostrarAnuncioExterno() {
-    programarSiguienteCiclo();
 }
 
 function cerrarModalAnuncio() {
     if (temporizadorCierreAnuncio) clearTimeout(temporizadorCierreAnuncio);
 
     const modal = document.getElementById("modal-anuncio");
-    modal.classList.remove("visible");
+    if (modal) modal.classList.remove("visible");
 
-    const video = document.getElementById("anuncio-media-grande").querySelector("video");
+    const media = document.getElementById("anuncio-media-grande");
+    const video = media ? media.querySelector("video") : null;
     if (video) video.pause();
     if (audioAnuncioActual) { audioAnuncioActual.pause(); audioAnuncioActual = null; }
 

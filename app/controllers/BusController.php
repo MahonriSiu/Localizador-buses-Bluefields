@@ -40,9 +40,9 @@ class BusController {
         echo json_encode(array("en_reposo" => false, "bus" => $bus));
     }
 
-    public function obtenerParadas($busId) {
+    public function obtenerParadas() {
         header("Content-Type: application/json");
-        $paradas = $this->modeloParada->obtenerPorBus($busId);
+        $paradas = $this->modeloParada->obtenerTodas();
         echo json_encode($paradas);
     }
 
@@ -202,6 +202,31 @@ class BusController {
             "puntos" => $ruta ? json_decode($ruta['puntos']) : array(),
             "color" => $ruta ? $ruta['color'] : '#F27127'
         ));
+    }
+    
+        public function registrarAccesoSiCorresponde() {
+        header("Content-Type: application/json");
+        session_start();
+
+        if (!isset($_SESSION['usuario_final_id'])) {
+            echo json_encode(array("exito" => false));
+            return;
+        }
+
+        $usuarioFinalId = $_SESSION['usuario_final_id'];
+        $ultimo = $this->modeloRegistroAcceso->obtenerUltimoAccesoUsuario($usuarioFinalId);
+
+        $debeRegistrar = true;
+        if ($ultimo) {
+            $minutos = (strtotime('now') - strtotime($ultimo)) / 60;
+            if ($minutos < 20) $debeRegistrar = false;
+        }
+
+        if ($debeRegistrar) {
+            $this->modeloRegistroAcceso->registrar('usuario_final_acceso', $usuarioFinalId);
+        }
+
+        echo json_encode(array("exito" => true, "registrado" => $debeRegistrar));
     }
 }
 ?>

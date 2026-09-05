@@ -26,13 +26,7 @@ class Usuario {
         $stmt = $this->conexion->prepare($sql);
         $stmt->bind_param("ssss", $nombre, $correo, $hash, $rol);
         $stmt->execute();
-        $nuevoId = $this->conexion->insert_id;
-
-        if ($rol === 'auditor' || $rol === 'propietario') {
-            $this->guardarEnHistorial($nuevoId, $contrasenaPlano);
-        }
-
-        return $nuevoId;
+        return $this->conexion->insert_id;
     }
 
     public function cambiarContrasena($usuarioId, $contrasenaNuevaPlano) {
@@ -45,14 +39,9 @@ class Usuario {
         $stmt->bind_param("si", $hash, $usuarioId);
         $stmt->execute();
 
-        if ($usuario['rol'] === 'auditor' || $usuario['rol'] === 'propietario') {
-            $this->guardarEnHistorial($usuarioId, $contrasenaNuevaPlano);
-        }
-
         return true;
     }
 
-    // el admin nunca queda en el historial en texto plano, sin importar quien cambie su contrasena
     public function cambiarContrasenaPropia($usuarioId, $contrasenaActual, $contrasenaNueva) {
         $usuario = $this->obtenerPorId($usuarioId);
         if (!$usuario) return "usuario_no_encontrado";
@@ -67,31 +56,7 @@ class Usuario {
         $stmt->bind_param("si", $hash, $usuarioId);
         $stmt->execute();
 
-        if ($usuario['rol'] === 'auditor' || $usuario['rol'] === 'propietario') {
-            $this->guardarEnHistorial($usuarioId, $contrasenaNueva);
-        }
-
         return "exito";
-    }
-
-    private function guardarEnHistorial($usuarioId, $contrasenaPlano) {
-        $sql = "INSERT INTO historial_contrasenas (usuario_id, contrasena_anterior) VALUES (?, ?)";
-        $stmt = $this->conexion->prepare($sql);
-        $stmt->bind_param("is", $usuarioId, $contrasenaPlano);
-        $stmt->execute();
-    }
-
-    public function obtenerHistorialContrasenas($usuarioId) {
-        $sql = "SELECT contrasena_anterior, fecha_cambio FROM historial_contrasenas WHERE usuario_id = ? ORDER BY fecha_cambio DESC";
-        $stmt = $this->conexion->prepare($sql);
-        $stmt->bind_param("i", $usuarioId);
-        $stmt->execute();
-        $resultado = $stmt->get_result();
-        $historial = array();
-        while ($fila = $resultado->fetch_assoc()) {
-            $historial[] = $fila;
-        }
-        return $historial;
     }
 
     public function obtenerPorId($id) {
@@ -136,6 +101,13 @@ class Usuario {
         $sql = "UPDATE usuarios SET foto_perfil = ? WHERE id = ?";
         $stmt = $this->conexion->prepare($sql);
         $stmt->bind_param("si", $rutaFoto, $id);
+        return $stmt->execute();
+    }
+
+    public function eliminar($id) {
+        $sql = "DELETE FROM usuarios WHERE id = ?";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bind_param("i", $id);
         return $stmt->execute();
     }
 }

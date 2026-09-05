@@ -24,7 +24,6 @@ const ICONO_PARADA_SVG =
     "<circle cx='18' cy='20.5' r='1.6' fill='#0D0D0D'/>" +
     "</svg>";
 
-// pin chico, sin estrella, cuyo color se ajusta al color propio de cada evento
 function iconoEventoSvg(color) {
     return "<svg width='24' height='30' viewBox='0 0 24 30' xmlns='http://www.w3.org/2000/svg'>" +
         "<path d='M12 0C5.4 0 0 5.4 0 12c0 9 12 18 12 18s12-9 12-18C24 5.4 18.6 0 12 0z' fill='" + color + "'/>" +
@@ -44,6 +43,7 @@ function iniciarMapa() {
     window.addEventListener("resize", function () { mapa.invalidateSize(); });
 
     cargarBuses();
+    cargarTodasLasParadas();
     cargarEventosDisponibles();
     seguirUbicacionUsuario();
 }
@@ -71,17 +71,17 @@ async function cargarBuses() {
     selector.addEventListener("change", function () {
         busSeleccionado = selector.value;
         if (busSeleccionado) {
-            cargarParadas(busSeleccionado);
             actualizarBus(true);
+            dibujarRecorrido(busSeleccionado);
         }
     });
 }
 
-async function cargarParadas(busId) {
+async function cargarTodasLasParadas() {
     marcadoresParadas.forEach(function (m) { mapa.removeLayer(m); });
     marcadoresParadas = [];
 
-    const respuesta = await fetch(URL_BASE + "/obtener_paradas.php?bus_id=" + busId);
+    const respuesta = await fetch(URL_BASE + "/obtener_paradas.php");
     const paradas = await respuesta.json();
 
     paradas.forEach(function (parada) {
@@ -96,47 +96,24 @@ async function cargarParadas(busId) {
     });
 
     window.paradasActuales = paradas;
-    dibujarRecorrido(busId);
 }
 
-// linea del trayecto reciente del bus, con flechas mostrando hacia donde avanza.
-// Solo se dibuja cuando hay un bus seleccionado, para no saturar el mapa.
 async function dibujarRecorrido(busId) {
-    if (lineaRecorrido) {
-        mapa.removeLayer(lineaRecorrido);
-        lineaRecorrido = null;
-    }
-    if (decoradorFlechas) {
-        mapa.removeLayer(decoradorFlechas);
-        decoradorFlechas = null;
-    }
+    if (lineaRecorrido) { mapa.removeLayer(lineaRecorrido); lineaRecorrido = null; }
+    if (decoradorFlechas) { mapa.removeLayer(decoradorFlechas); decoradorFlechas = null; }
 
-    const respuesta = await fetch(URL_BASE + "/obtener_recorrido.php?bus_id=" + busId);
+    const respuesta = await fetch(URL_BASE + "/obtener_ruta_definida.php?bus_id=" + busId);
     const resultado = await respuesta.json();
 
     if (!resultado.puntos || resultado.puntos.length < 2) return;
 
-    const coordenadas = resultado.puntos.map(function (p) { return [p.lat, p.lng]; });
-    lineaRecorrido = L.polyline(coordenadas, {
-        color: "#F27127",
-        weight: 4,
-        opacity: 0.75,
-        dashArray: resultado.ruta_aprendida ? null : "8, 8"
-    }).addTo(mapa);
+    const color = resultado.color || "#F27127";
+    const coordenadas = resultado.puntos.map(function (p) { return [p[0], p[1]]; });
+    lineaRecorrido = L.polyline(coordenadas, { color: color, weight: 5, opacity: 0.85 }).addTo(mapa);
 
     if (typeof L.polylineDecorator === "function") {
         decoradorFlechas = L.polylineDecorator(lineaRecorrido, {
-            patterns: [
-                {
-                    offset: "8%",
-                    repeat: "12%",
-                    symbol: L.Symbol.arrowHead({
-                        pixelSize: 10,
-                        polygon: false,
-                        pathOptions: { stroke: true, color: "#c2530f", weight: 3 }
-                    })
-                }
-            ]
+            patterns: [{ offset: "6%", repeat: "10%", symbol: L.Symbol.arrowHead({ pixelSize: 10, polygon: false, pathOptions: { stroke: true, color: color, weight: 3 } }) }]
         }).addTo(mapa);
     }
 }
@@ -192,8 +169,6 @@ async function actualizarBus(centrar) {
     }
 }
 
-// ============ EVENTOS / CIRCUITOS (panel desplegable, activar/desactivar cada uno) ============
-
 async function cargarEventosDisponibles() {
     const respuesta = await fetch(URL_BASE + "/obtener_eventos_activos.php");
     const resultado = await respuesta.json();
@@ -221,12 +196,6 @@ async function cargarEventosDisponibles() {
             if (checkbox.checked) activarCapaEvento(evento);
             else desactivarCapaEvento(evento.id);
         });
-
-        // la Ruta Creativa (permanente) viene activada de una vez por defecto
-        if (evento.siempre_activo == 1) {
-            checkbox.checked = true;
-            activarCapaEvento(evento);
-        }
     });
 }
 
@@ -302,7 +271,6 @@ function abrirModalPuntoCreativo(punto, evento) {
     document.getElementById("creativo-descripcion").textContent = punto.descripcion;
     document.getElementById("creativo-etiqueta-evento").textContent = "📍 " + evento.nombre;
 
-    // la portada (una sola) se muestra primero si existe; si no, se usa la galeria
     const imagenesFinal = [];
     if (punto.imagen_portada) imagenesFinal.push({ nombre_archivo: punto.imagen_portada });
     (punto.imagenes || []).forEach(function (img) { imagenesFinal.push(img); });
@@ -474,24 +442,62 @@ function revisarCercaniaParadas() {
     if (!posicionUsuario || !window.paradasActuales) return;
     window.paradasActuales.forEach(function (parada) {
         const distancia = calcularDistanciaMetros(posicionUsuario.lat, posicionUsuario.lng, parseFloat(parada.lat), parseFloat(parada.lng));
-        if (distancia <= 15 && !paradasNotificadas.has(parada.id)) { paradasNotificadas.add(parada.id); avisarBusCercaDeParada(parada); }
-        if (distancia > 15) paradasNotificadas.delete(parada.id);
+        if (distancia <= 50 && !paradasNotificadas.has(parada.id)) { paradasNotificadas.add(parada.id); avisarBusCercaDeParada(parada); }
+        if (distancia > 50) paradasNotificadas.delete(parada.id);
     });
 }
 
 async function avisarBusCercaDeParada(parada) {
-    if (!window.busActual) { mostrarNotificacionParada(parada.nombre, null, null); return; }
+    if (!window.busActual) { mostrarNotificacionParada(parada.nombre, null, null, null); return; }
+
     const respuesta = await fetch(URL_BASE + "/obtener_estimacion.php?bus_id=" + window.busActual.id + "&parada_id=" + parada.id);
     const estimacion = await respuesta.json();
-    if (estimacion.exito) mostrarNotificacionParada(parada.nombre, estimacion.minutos_estimados, estimacion.distancia_km);
-    else mostrarNotificacionParada(parada.nombre, null, null);
+
+    if (estimacion.exito) {
+        mostrarNotificacionParada(parada.nombre, estimacion.minutos_estimados, estimacion.distancia_km, window.busActual);
+    } else {
+        mostrarNotificacionParada(parada.nombre, null, null, window.busActual);
+    }
 }
 
-function mostrarNotificacionParada(nombreParada, minutos, distanciaKm) {
-    let texto = "Bus cerca de " + nombreParada;
-    if (minutos !== null) texto += " - Llega en aproximadamente " + minutos + " min (" + distanciaKm + " km)";
-    if (Notification.permission === "granted") new Notification(texto);
-    else alert(texto);
+function mostrarNotificacionParada(nombreParada, minutos, distanciaKm, bus) {
+    const nombreBus = bus ? bus.nombre : "Tu bus";
+    const descripcionBus = bus && bus.descripcion ? bus.descripcion : "";
+
+    let titulo = nombreBus + " esta cerca de " + nombreParada;
+    let cuerpo = "";
+
+    if (minutos !== null) {
+        cuerpo = "Llega en aproximadamente " + minutos + " min (" + distanciaKm + " km)";
+    }
+    if (descripcionBus) {
+        cuerpo += (cuerpo ? " · " : "") + descripcionBus;
+    }
+    if (!cuerpo) {
+        cuerpo = "Esta a menos de 50 metros de tu parada.";
+    }
+
+    const logoUrl = URL_BASE + "/asset.php?tipo=img&archivo=logo.png";
+
+    if (Notification.permission !== "granted") {
+        alert(titulo + "\n" + cuerpo);
+        return;
+    }
+
+    if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+        navigator.serviceWorker.ready.then(function (registro) {
+            registro.showNotification(titulo, {
+                body: cuerpo,
+                icon: logoUrl,
+                badge: logoUrl,
+                tag: "mibus-aviso-" + nombreParada,
+                renotify: true,
+                vibrate: [120, 60, 120]
+            });
+        });
+    } else {
+        new Notification(titulo, { body: cuerpo, icon: logoUrl });
+    }
 }
 
 function activarNotificaciones() {
@@ -559,29 +565,10 @@ async function enviarResena() {
     }
 }
 
-async function dibujarRecorrido(busId) {
-    if (lineaRecorrido) { mapa.removeLayer(lineaRecorrido); lineaRecorrido = null; }
-    if (decoradorFlechas) { mapa.removeLayer(decoradorFlechas); decoradorFlechas = null; }
-
-    const respuesta = await fetch(URL_BASE + "/obtener_ruta_definida.php?bus_id=" + busId);
-    const resultado = await respuesta.json();
-
-    if (!resultado.puntos || resultado.puntos.length < 2) return;
-
-    const color = resultado.color || "#F27127";
-    const coordenadas = resultado.puntos.map(function (p) { return [p[0], p[1]]; });
-    lineaRecorrido = L.polyline(coordenadas, { color: color, weight: 5, opacity: 0.85 }).addTo(mapa);
-
-    if (typeof L.polylineDecorator === "function") {
-        decoradorFlechas = L.polylineDecorator(lineaRecorrido, {
-            patterns: [{ offset: "6%", repeat: "10%", symbol: L.Symbol.arrowHead({ pixelSize: 10, polygon: false, pathOptions: { stroke: true, color: color, weight: 3 } }) }]
-        }).addTo(mapa);
-    }
-}
-
 document.addEventListener("DOMContentLoaded", function () {
     iniciarMapa();
     sincronizarEstadoNotificaciones();
+    fetch(URL_BASE + "/registrar_acceso_usuario.php").catch(function () {});
     setInterval(function () { actualizarBus(false); }, 5000);
     setInterval(function () { if (busSeleccionado) dibujarRecorrido(busSeleccionado); }, 30000);
 });

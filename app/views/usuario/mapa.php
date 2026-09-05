@@ -56,7 +56,8 @@
     </div>
 
     <div class="modal-overlay" id="modal-info-bus">
-        <div class="modal-caja">
+        <div class="modal-caja" style="position: relative;">
+            <button class="modal-cerrar-x" onclick="cerrarInfoBus()">✕</button>
             <h2>Informacion del bus</h2>
             <div class="info-bus-fila">
                 <strong>Nombre</strong>
@@ -81,9 +82,23 @@
             <button class="boton boton-secundario boton-bloque" onclick="cerrarInfoBus()">Cerrar</button>
         </div>
     </div>
-
+    
+    <div class="modal-overlay modal-anuncio-overlay" id="modal-anuncio">
+        <div class="modal-anuncio-caja">
+            <button class="anuncio-sonido" id="anuncio-sonido">🔇</button>
+            <button class="anuncio-cerrar" id="anuncio-cerrar">✕</button>
+            <div class="anuncio-media-grande" id="anuncio-media-grande"></div>
+            <div class="anuncio-contenido-grande">
+                <span class="anuncio-etiqueta-grande">Anuncio local</span>
+                <strong id="anuncio-titulo-grande"></strong>
+                <span id="anuncio-texto-grande"></span>
+            </div>
+        </div>
+    </div>
+    
     <div class="modal-overlay" id="modal-punto-creativo">
         <div class="modal-caja modal-creativo">
+            <button class="modal-cerrar-x" onclick="cerrarModalPuntoCreativo()">✕</button>
             <div class="creativo-galeria">
                 <button class="creativo-flecha izq" onclick="galeriaAnterior()">‹</button>
                 <div id="creativo-imagen-actual" class="creativo-imagen-actual"></div>
@@ -100,7 +115,8 @@
     </div>
 
     <div class="modal-overlay" id="modal-resena">
-        <div class="modal-caja">
+        <div class="modal-caja" style="position: relative;">
+            <button class="modal-cerrar-x" onclick="cerrarModalResena()">✕</button>
             <h2>Tu opinion nos ayuda</h2>
             <p style="font-size: 13px; color: #6b6255; margin-bottom: 14px;">Dejanos una resena o recomendacion sobre el servicio.</p>
             <div id="mensaje-resena"></div>
@@ -126,19 +142,6 @@
         </div>
     </div>
 
-    <div class="modal-overlay modal-anuncio-overlay" id="modal-anuncio">
-        <div class="modal-anuncio-caja">
-            <button class="anuncio-sonido" id="anuncio-sonido">🔇</button>
-            <button class="anuncio-cerrar" id="anuncio-cerrar">✕</button>
-            <div class="anuncio-media-grande" id="anuncio-media-grande"></div>
-            <div class="anuncio-contenido-grande">
-                <span class="anuncio-etiqueta-grande">Anuncio local</span>
-                <strong id="anuncio-titulo-grande"></strong>
-                <span id="anuncio-texto-grande"></span>
-            </div>
-        </div>
-    </div>
-
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
     <script src="<?php echo URL_BASE; ?>/asset.php?tipo=js&archivo=utilidades.js"></script>
@@ -146,5 +149,10 @@
     <script src="<?php echo URL_BASE; ?>/asset.php?tipo=js&archivo=tutorial.js"></script>
     <script src="<?php echo URL_BASE; ?>/asset.php?tipo=js&archivo=anuncios.js"></script>
     <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('<?php echo URL_BASE; ?>/service-worker.js');
+        }
+    </script>
 </body>
 </html>

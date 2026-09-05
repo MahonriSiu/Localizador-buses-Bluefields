@@ -72,8 +72,6 @@ class AnuncioController {
             }
         }
 
-        // audio opcional e independiente: sirve para poner sonido a un anuncio de
-        // imagen (una foto con un jingle de fondo), o musica/voz extra en cualquier caso
         if (isset($_FILES['audio']) && $_FILES['audio']['error'] === UPLOAD_ERR_OK) {
             $tiposAudioPermitidos = array('audio/mpeg' => 'mp3', 'audio/mp4' => 'm4a', 'audio/wav' => 'wav', 'audio/x-wav' => 'wav');
             $mimeAudio = mime_content_type($_FILES['audio']['tmp_name']);
