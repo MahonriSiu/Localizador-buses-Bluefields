@@ -2259,3 +2259,103 @@ body.pagina-mapa-interno {
     border-radius: 6px;
     font-family: monospace;
 }
+
+.modal-cerrar-x {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 5;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(13,13,13,0.6);
+    color: #fff;
+    border: none;
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-cerrar-x:hover {
+    background: rgba(13,13,13,0.8);
+}
+
+/* Decoracion exclusiva de la pantalla de registro/login del usuario final */
+
+.auth-marca-decorado {
+    position: relative;
+}
+
+.auth-marca-contenido {
+    position: relative;
+    z-index: 2;
+}
+
+.decoracion-cielo {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.nube {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 50px;
+    animation: nube-flotar 22s ease-in-out infinite;
+}
+
+.nube::before, .nube::after {
+    content: "";
+    position: absolute;
+    background: inherit;
+    border-radius: 50%;
+}
+
+.nube1 { width: 70px; height: 24px; top: 14%; left: 10%; animation-duration: 26s; }
+.nube1::before { width: 32px; height: 32px; top: -16px; left: 8px; }
+.nube1::after { width: 24px; height: 24px; top: -10px; left: 34px; }
+
+.nube2 { width: 54px; height: 18px; top: 24%; right: 12%; animation-duration: 20s; animation-delay: 3s; }
+.nube2::before { width: 24px; height: 24px; top: -12px; left: 6px; }
+.nube2::after { width: 18px; height: 18px; top: -8px; left: 26px; }
+
+.nube3 { width: 40px; height: 14px; top: 40%; left: 30%; opacity: 0.7; animation-duration: 30s; animation-delay: 6s; }
+.nube3::before { width: 18px; height: 18px; top: -9px; left: 4px; }
+.nube3::after { width: 14px; height: 14px; top: -6px; left: 20px; }
+
+@keyframes nube-flotar {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(18px); }
+}
+
+.colina {
+    position: absolute;
+    bottom: -40px;
+    left: -10%;
+    width: 120%;
+    height: 90px;
+    background: var(--color-primario-oscuro);
+    opacity: 0.55;
+    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+}
+
+.hoja {
+    position: absolute;
+    bottom: 0;
+    width: 26px;
+    height: 46px;
+    background: var(--color-naranja-claro);
+    opacity: 0.5;
+    border-radius: 0 100% 0 100%;
+    transform-origin: bottom center;
+}
+
+.hoja1 { left: 6%; transform: rotate(-15deg); }
+.hoja2 { left: 12%; height: 34px; opacity: 0.35; transform: rotate(10deg); }
+
+@media (max-width: 780px) {
+    .decoracion-cielo { display: none; }
+}

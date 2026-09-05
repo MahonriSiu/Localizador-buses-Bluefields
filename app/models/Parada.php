@@ -6,12 +6,9 @@ class Parada {
         $this->conexion = $conexion;
     }
 
-    public function obtenerPorBus($busId) {
-        $sql = "SELECT * FROM paradas WHERE bus_id = ? ORDER BY orden ASC";
-        $stmt = $this->conexion->prepare($sql);
-        $stmt->bind_param("i", $busId);
-        $stmt->execute();
-        $resultado = $stmt->get_result();
+    public function obtenerTodas() {
+        $sql = "SELECT * FROM paradas ORDER BY id ASC";
+        $resultado = $this->conexion->query($sql);
         $paradas = array();
         while ($fila = $resultado->fetch_assoc()) {
             $paradas[] = $fila;
@@ -19,10 +16,10 @@ class Parada {
         return $paradas;
     }
 
-    public function crear($busId, $nombre, $lat, $lng, $orden) {
-        $sql = "INSERT INTO paradas (bus_id, nombre, lat, lng, orden) VALUES (?, ?, ?, ?, ?)";
+    public function crear($nombre, $lat, $lng) {
+        $sql = "INSERT INTO paradas (nombre, lat, lng, orden) VALUES (?, ?, ?, 0)";
         $stmt = $this->conexion->prepare($sql);
-        $stmt->bind_param("isddi", $busId, $nombre, $lat, $lng, $orden);
+        $stmt->bind_param("sdd", $nombre, $lat, $lng);
         $stmt->execute();
         return $this->conexion->insert_id;
     }

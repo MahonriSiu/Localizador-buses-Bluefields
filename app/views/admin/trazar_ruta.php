@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MiBus - Marcar Puntos de Eventos</title>
+    <title>MiBus - Marcar Puntos</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="<?php echo URL_BASE; ?>/asset.php?tipo=css&archivo=estilos.css">
 </head>
@@ -17,12 +17,18 @@
 
         <div class="trazador-panel">
             <div class="trazador-fila">
-                <label class="trazador-etiqueta">Evento</label>
+                <label class="trazador-etiqueta">Tipo de marcador</label>
+                <select id="tipo-marcador" onchange="cambiarTipoMarcador()">
+                    <option value="evento">Punto de evento</option>
+                    <option value="parada">Parada de bus</option>
+                </select>
+            </div>
+
+            <div class="trazador-fila" id="bloque-selector-evento">
                 <select id="evento-para-marcar" onchange="cambiarEventoSeleccionado()"></select>
             </div>
 
-            <div class="trazador-fila">
-                <label class="trazador-etiqueta">Tipo de punto al tocar el mapa</label>
+            <div class="trazador-fila" id="bloque-tipo-punto-evento">
                 <select id="tipo-punto-nuevo">
                     <option value="visible">Visible (lugar con nombre e info)</option>
                     <option value="invisible">Invisible (solo marca el camino)</option>
@@ -30,35 +36,42 @@
             </div>
 
             <div id="coordenadas-clic" class="trazador-coords" style="display:none;"></div>
-
             <div id="mensaje-marcar"></div>
+
+            <div class="tabla-panel-scroll" id="bloque-lista-paradas" style="display:none; max-height: 220px;">
+                <table class="tabla-panel">
+                    <thead><tr><th>Parada</th><th>Accion</th></tr></thead>
+                    <tbody id="cuerpo-tabla-paradas-mapa"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="modal-punto-mapa">
-        <div class="modal-caja">
+        <div class="modal-caja" style="position: relative;">
+            <button class="modal-cerrar-x" onclick="cerrarModalPuntoMapa()">✕</button>
             <h2 id="titulo-modal-punto">Nuevo punto</h2>
             <input type="hidden" id="modal-punto-id" value="">
             <input type="hidden" id="modal-punto-lat" value="">
             <input type="hidden" id="modal-punto-lng" value="">
 
             <div class="campo-formulario" id="bloque-nombre-modal">
-                <label>Nombre del lugar</label>
+                <label id="etiqueta-nombre-modal">Nombre del lugar</label>
                 <input type="text" id="modal-punto-nombre" placeholder="Ej: Parque Reyes">
             </div>
             <div class="campo-formulario" id="bloque-descripcion-modal">
                 <label>Descripcion</label>
                 <textarea id="modal-punto-descripcion" rows="4" style="width:100%; padding:10px 12px; border:1px solid #d9cdb8; border-radius:6px; font-family: var(--fuente-cuerpo); font-size:16px; resize: vertical;"></textarea>
             </div>
-            <div class="campo-formulario">
+            <div class="campo-formulario" id="bloque-orden-modal">
                 <label>Orden en el recorrido</label>
                 <input type="number" id="modal-punto-orden" value="1">
             </div>
-            <div class="campo-formulario">
+            <div class="campo-formulario" id="bloque-visible-modal">
                 <label><input type="checkbox" id="modal-punto-visible" checked onchange="alternarCamposVisibilidadModal()"> Punto visible (con nombre e info para el usuario)</label>
             </div>
 
-            <button class="boton boton-primario boton-bloque" onclick="guardarPuntoDesdeMapa()">Guardar punto</button>
+            <button class="boton boton-primario boton-bloque" onclick="guardarPuntoDesdeMapa()">Guardar</button>
             <button class="boton boton-secundario boton-bloque" style="margin-top: 8px;" onclick="cerrarModalPuntoMapa()">Cancelar</button>
         </div>
     </div>
@@ -70,8 +83,10 @@
         const URL_BASE = "<?php echo URL_BASE; ?>";
         let mapa;
         let marcadoresEnMapa = [];
+        let marcadoresParadasMapa = [];
         let lineaConexion = null;
         let decoradorFlechasEvento = null;
+        let tipoMarcadorActual = "evento";
 
         function iniciarMapa() {
             mapa = L.map("mapa").setView([11.9986, -83.7574], 14);
@@ -79,7 +94,11 @@
             setTimeout(function () { mapa.invalidateSize(); }, 200);
 
             mapa.on("click", function (e) {
-                abrirModalPuntoNuevo(e.latlng.lat, e.latlng.lng);
+                if (tipoMarcadorActual === "evento") {
+                    abrirModalPuntoNuevoEvento(e.latlng.lat, e.latlng.lng);
+                } else {
+                    abrirModalPuntoNuevoParada(e.latlng.lat, e.latlng.lng);
+                }
             });
 
             mapa.on("mousemove", function (e) {
@@ -89,6 +108,24 @@
             });
 
             cargarEventosSelector();
+        }
+
+        function cambiarTipoMarcador() {
+            tipoMarcadorActual = document.getElementById("tipo-marcador").value;
+            document.getElementById("bloque-selector-evento").style.display = tipoMarcadorActual === "evento" ? "flex" : "none";
+            document.getElementById("bloque-tipo-punto-evento").style.display = tipoMarcadorActual === "evento" ? "flex" : "none";
+            document.getElementById("bloque-lista-paradas").style.display = tipoMarcadorActual === "parada" ? "block" : "none";
+
+            marcadoresEnMapa.forEach(function (m) { mapa.removeLayer(m); });
+            marcadoresEnMapa = [];
+            if (lineaConexion) { mapa.removeLayer(lineaConexion); lineaConexion = null; }
+            if (decoradorFlechasEvento) { mapa.removeLayer(decoradorFlechasEvento); decoradorFlechasEvento = null; }
+
+            if (tipoMarcadorActual === "evento") {
+                cargarPuntosDelEventoEnMapa();
+            } else {
+                cargarParadasEnMapa();
+            }
         }
 
         async function cargarEventosSelector() {
@@ -137,6 +174,18 @@
             });
         }
 
+        function iconoParadaMapa() {
+            return L.divIcon({
+                className: "icono-parada-mapa",
+                html: "<svg width='28' height='28' viewBox='0 0 28 28' xmlns='http://www.w3.org/2000/svg'>" +
+                    "<circle cx='14' cy='14' r='12' fill='#ffffff' stroke='#016C80' stroke-width='2.5'/>" +
+                    "<rect x='8' y='8' width='12' height='9' rx='1.5' fill='#016C80'/>" +
+                    "<rect x='8' y='8' width='12' height='3.5' rx='1.5' fill='#F27127'/></svg>",
+                iconSize: [28, 28],
+                iconAnchor: [14, 28]
+            });
+        }
+
         async function cargarPuntosDelEventoEnMapa() {
             marcadoresEnMapa.forEach(function (m) { mapa.removeLayer(m); });
             marcadoresEnMapa = [];
@@ -161,10 +210,7 @@
             const puntosRuta = (resultado.puntos || []).filter(function (p) { return p.visible == 0; });
 
             if (puntosRuta.length >= 2) {
-                const coords = puntosRuta
-                    .sort(function (a, b) { return a.orden - b.orden; })
-                    .map(function (p) { return [p.lat, p.lng]; });
-
+                const coords = puntosRuta.sort(function (a, b) { return a.orden - b.orden; }).map(function (p) { return [p.lat, p.lng]; });
                 lineaConexion = L.polyline(coords, { color: color, weight: 4, opacity: 0.7, dashArray: "6,6" }).addTo(mapa);
 
                 if (typeof L.polylineDecorator === "function") {
@@ -179,19 +225,62 @@
                 mapa.fitBounds(grupo.getBounds().pad(0.2));
             }
         }
-        function abrirModalPuntoNuevo(lat, lng) {
+
+        async function cargarParadasEnMapa() {
+            marcadoresParadasMapa.forEach(function (m) { mapa.removeLayer(m); });
+            marcadoresParadasMapa = [];
+
+            const respuesta = await fetch(URL_BASE + "/admin_obtener_paradas.php", { method: "POST" });
+            const resultado = await respuesta.json();
+            const cuerpo = document.getElementById("cuerpo-tabla-paradas-mapa");
+            cuerpo.innerHTML = "";
+
+            (resultado.paradas || []).forEach(function (p) {
+                const marcador = L.marker([p.lat, p.lng], { icon: iconoParadaMapa() })
+                    .addTo(mapa)
+                    .bindPopup("🚏 " + p.nombre);
+                marcadoresParadasMapa.push(marcador);
+
+                cuerpo.innerHTML += "<tr><td>" + p.nombre + "</td><td><button class='boton boton-peligro' onclick='eliminarParadaMapa(" + p.id + ")'>Eliminar</button></td></tr>";
+            });
+
+            if (marcadoresParadasMapa.length > 0) {
+                const grupo = L.featureGroup(marcadoresParadasMapa);
+                mapa.fitBounds(grupo.getBounds().pad(0.2));
+            }
+        }
+
+        function abrirModalPuntoNuevoEvento(lat, lng) {
             document.getElementById("modal-punto-id").value = "";
             document.getElementById("modal-punto-lat").value = lat;
             document.getElementById("modal-punto-lng").value = lng;
             document.getElementById("modal-punto-nombre").value = "";
             document.getElementById("modal-punto-descripcion").value = "";
             document.getElementById("modal-punto-orden").value = marcadoresEnMapa.length + 1;
+            document.getElementById("etiqueta-nombre-modal").textContent = "Nombre del lugar";
+            document.getElementById("bloque-descripcion-modal").style.display = "block";
+            document.getElementById("bloque-orden-modal").style.display = "block";
+            document.getElementById("bloque-visible-modal").style.display = "block";
 
             const tipoElegido = document.getElementById("tipo-punto-nuevo").value;
             document.getElementById("modal-punto-visible").checked = tipoElegido === "visible";
 
-            document.getElementById("titulo-modal-punto").textContent = "Nuevo punto (" + lat.toFixed(5) + ", " + lng.toFixed(5) + ")";
+            document.getElementById("titulo-modal-punto").textContent = "Nuevo punto de evento";
             alternarCamposVisibilidadModal();
+            document.getElementById("modal-punto-mapa").classList.add("visible");
+        }
+
+        function abrirModalPuntoNuevoParada(lat, lng) {
+            document.getElementById("modal-punto-id").value = "";
+            document.getElementById("modal-punto-lat").value = lat;
+            document.getElementById("modal-punto-lng").value = lng;
+            document.getElementById("modal-punto-nombre").value = "";
+            document.getElementById("etiqueta-nombre-modal").textContent = "Nombre de la parada";
+            document.getElementById("bloque-descripcion-modal").style.display = "none";
+            document.getElementById("bloque-orden-modal").style.display = "none";
+            document.getElementById("bloque-visible-modal").style.display = "none";
+
+            document.getElementById("titulo-modal-punto").textContent = "Nueva parada de bus";
             document.getElementById("modal-punto-mapa").classList.add("visible");
         }
 
@@ -208,6 +297,10 @@
             document.getElementById("modal-punto-descripcion").value = punto.descripcion;
             document.getElementById("modal-punto-orden").value = punto.orden;
             document.getElementById("modal-punto-visible").checked = punto.visible == 1;
+            document.getElementById("etiqueta-nombre-modal").textContent = "Nombre del lugar";
+            document.getElementById("bloque-descripcion-modal").style.display = "block";
+            document.getElementById("bloque-orden-modal").style.display = "block";
+            document.getElementById("bloque-visible-modal").style.display = "block";
 
             document.getElementById("titulo-modal-punto").textContent = "Editar: " + punto.nombre;
             alternarCamposVisibilidadModal();
@@ -217,7 +310,6 @@
         function alternarCamposVisibilidadModal() {
             const visible = document.getElementById("modal-punto-visible").checked;
             document.getElementById("bloque-nombre-modal").style.display = visible ? "block" : "none";
-            document.getElementById("bloque-descripcion-modal").style.display = visible ? "block" : "none";
         }
 
         function cerrarModalPuntoMapa() {
@@ -225,13 +317,27 @@
         }
 
         async function guardarPuntoDesdeMapa() {
+            const lat = document.getElementById("modal-punto-lat").value;
+            const lng = document.getElementById("modal-punto-lng").value;
+            const nombre = document.getElementById("modal-punto-nombre").value;
+
+            if (tipoMarcadorActual === "parada") {
+                if (trim_js(nombre) === "") { mostrarMensaje("mensaje-marcar", "La parada necesita un nombre", true); return; }
+                const resultado = await llamarApi(URL_BASE + "/admin_agregar_parada.php", { nombre: nombre, lat: lat, lng: lng });
+                if (resultado.exito) {
+                    mostrarMensaje("mensaje-marcar", "Parada guardada", false);
+                    cerrarModalPuntoMapa();
+                    cargarParadasEnMapa();
+                } else {
+                    mostrarMensaje("mensaje-marcar", resultado.mensaje, true);
+                }
+                return;
+            }
+
             const eventoId = document.getElementById("evento-para-marcar").value;
             if (!eventoId) { mostrarMensaje("mensaje-marcar", "Selecciona un evento primero", true); return; }
 
             const id = document.getElementById("modal-punto-id").value;
-            const lat = document.getElementById("modal-punto-lat").value;
-            const lng = document.getElementById("modal-punto-lng").value;
-            const nombre = document.getElementById("modal-punto-nombre").value;
             const descripcion = document.getElementById("modal-punto-descripcion").value;
             const orden = document.getElementById("modal-punto-orden").value;
             const visible = document.getElementById("modal-punto-visible").checked ? 1 : 0;
@@ -249,6 +355,14 @@
             } else {
                 mostrarMensaje("mensaje-marcar", resultado.mensaje, true);
             }
+        }
+
+        function trim_js(texto) { return (texto || "").trim(); }
+
+        async function eliminarParadaMapa(id) {
+            if (!confirm("Eliminar esta parada?")) return;
+            await llamarApi(URL_BASE + "/admin_eliminar_parada.php", { id: id });
+            cargarParadasEnMapa();
         }
 
         document.addEventListener("DOMContentLoaded", iniciarMapa);

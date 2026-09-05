@@ -5,6 +5,16 @@ class RegistroAcceso {
     public function __construct($conexion) {
         $this->conexion = $conexion;
     }
+    
+    public function obtenerUltimoAccesoUsuario($usuarioFinalId) {
+        $sql = "SELECT fecha_hora FROM registro_accesos WHERE usuario_final_id = ? ORDER BY fecha_hora DESC LIMIT 1";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bind_param("i", $usuarioFinalId);
+        $stmt->execute();
+        $resultado = $stmt->get_result();
+        $fila = $resultado->fetch_assoc();
+        return $fila ? $fila['fecha_hora'] : null;
+    }
 
     public function registrar($tipoUsuario, $usuarioFinalId = null) {
         $sql = "INSERT INTO registro_accesos (tipo_usuario, usuario_final_id) VALUES (?, ?)";

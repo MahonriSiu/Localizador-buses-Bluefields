@@ -11,7 +11,4 @@ if (!isset($_SESSION['admin_autenticado'])) {
 }
 
 $modeloParada = new Parada($conexion);
-
-$busId = intval($_GET['bus_id']);
-$paradas = $modeloParada->obtenerPorBus($busId);
-echo json_encode(array("paradas" => $paradas));
+echo json_encode(array("paradas" => $modeloParada->obtenerTodas()));

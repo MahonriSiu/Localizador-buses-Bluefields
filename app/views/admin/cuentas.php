@@ -69,7 +69,7 @@
             <h2>Auditores</h2>
             <div class="tabla-panel-scroll">
                 <table class="tabla-panel">
-                    <thead><tr><th>Nombre</th><th>Correo</th><th>Historial</th><th>Resetear</th></tr></thead>
+                    <thead><tr><th>Nombre</th><th>Correo</th><th>Accion</th></tr></thead>
                     <tbody id="cuerpo-tabla-auditores"></tbody>
                 </table>
             </div>
@@ -79,7 +79,7 @@
             <h2>Propietarios</h2>
             <div class="tabla-panel-scroll">
                 <table class="tabla-panel">
-                    <thead><tr><th>Nombre</th><th>Correo</th><th>Historial</th><th>Resetear</th></tr></thead>
+                    <thead><tr><th>Nombre</th><th>Correo</th><th>Accion</th></tr></thead>
                     <tbody id="cuerpo-tabla-propietarios"></tbody>
                 </table>
             </div>

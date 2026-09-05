@@ -12,11 +12,14 @@ if (!isset($_SESSION['admin_autenticado'])) {
 
 $modeloParada = new Parada($conexion);
 
-$busId = intval($_POST['bus_id']);
-$nombre = $_POST['nombre'];
-$lat = floatval($_POST['lat']);
-$lng = floatval($_POST['lng']);
-$orden = intval($_POST['orden']);
+$nombre = isset($_POST['nombre']) ? $_POST['nombre'] : '';
+$lat = isset($_POST['lat']) ? str_replace(',', '.', trim($_POST['lat'])) : '0';
+$lng = isset($_POST['lng']) ? str_replace(',', '.', trim($_POST['lng'])) : '0';
 
-$id = $modeloParada->crear($busId, $nombre, $lat, $lng, $orden);
+if (trim($nombre) === '') {
+    echo json_encode(array("exito" => false, "mensaje" => "La parada necesita un nombre"));
+    exit;
+}
+
+$id = $modeloParada->crear($nombre, floatval($lat), floatval($lng));
 echo json_encode(array("exito" => true, "id" => $id));
