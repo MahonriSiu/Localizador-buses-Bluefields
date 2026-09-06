@@ -7,21 +7,19 @@ ini_set('session.cookie_samesite', 'Lax');
 ini_set('session.use_strict_mode', 1);
 session_set_cookie_params(['path' => '/', 'httponly' => true, 'samesite' => 'Lax']);
 
-$esLocal = (strpos($_SERVER['HTTP_HOST'], 'localhost') !== false);
-
-if ($esLocal) {
-    $host = "localhost";
-    $usuario = "root";
-    $contrasena = "";
-    $basedatos = "localizador_buses";
-} else {
-    $host = "sql211.infinityfree.com";
-    $usuario = "if0_42523829";
-    $contrasena = "00000000";
-    $basedatos = "if0_42523829_localizador";
+if (!file_exists(__DIR__ . '/credenciales.php')) {
+    http_response_code(500);
+    header("Content-Type: application/json");
+    echo json_encode(array(
+        "exito" => false,
+        "mensaje" => "Falta config/credenciales.php. Copia config/credenciales.example.php, renombralo y pon los datos reales."
+    ));
+    exit;
 }
 
-$conexion = new mysqli($host, $usuario, $contrasena, $basedatos);
+require_once(__DIR__ . '/credenciales.php');
+
+$conexion = new mysqli(DB_HOST, DB_USUARIO, DB_CONTRASENA, DB_NOMBRE);
 
 if ($conexion->connect_error) {
     http_response_code(500);
@@ -31,7 +29,6 @@ if ($conexion->connect_error) {
 }
 
 $conexion->set_charset("utf8mb4");
-
 $conexion->query("SET time_zone = '-06:00'");
 
 ?>
