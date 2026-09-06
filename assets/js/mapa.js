@@ -162,7 +162,8 @@ async function actualizarBus(centrar) {
     } else {
         marcadorBus = L.marker([bus.lat, bus.lng], { icon: iconoBus }).addTo(mapa);
     }
-    marcadorBus.bindPopup(bus.nombre + (bus.descripcion ? "<br>" + bus.descripcion : ""));
+    const estadoTexto = bus.conectado == 1 ? "🟢 En vivo" : "🔴 Sin señal reciente";
+    marcadorBus.bindPopup(bus.nombre + (bus.descripcion ? "<br>" + bus.descripcion : "") + "<br>" + estadoTexto);
 
     if (centrar) {
         mapa.flyTo([bus.lat, bus.lng], 16, { duration: 1.1 });

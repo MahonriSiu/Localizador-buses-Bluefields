@@ -31,14 +31,21 @@ class AdminController {
         session_start();
         header("Content-Type: application/json");
 
+        if ($this->modeloUsuario->contarIntentosFallidosRecientes($correo) >= 5) {
+            echo json_encode(array("exito" => false, "mensaje" => "Demasiados intentos fallidos. Espera 15 minutos e intenta de nuevo."));
+            return;
+        }
+
         $usuario = $this->modeloUsuario->verificarLogin($correo, $contrasena);
 
         if ($usuario && $usuario['rol'] === 'admin') {
+            $this->modeloUsuario->limpiarIntentosFallidos($correo);
             session_regenerate_id(true);
             $_SESSION['admin_autenticado'] = true;
             $_SESSION['usuario_id'] = $usuario['id'];
             echo json_encode(array("exito" => true, "debe_cambiar" => (bool)$usuario['debe_cambiar_contrasena']));
         } else {
+            $this->modeloUsuario->registrarIntentoFallido($correo);
             echo json_encode(array("exito" => false, "mensaje" => "Correo o contrasena incorrectos"));
         }
     }
@@ -74,6 +81,8 @@ class AdminController {
 
     public function crearCuenta($nombre, $correo, $rol) {
         $this->verificarSesion();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');
         header("Content-Type: application/json");
 
         if (!in_array($rol, ['admin', 'auditor', 'propietario'])) {
@@ -119,6 +128,8 @@ class AdminController {
 
     public function resetearContrasena($usuarioId) {
         $this->verificarSesion();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');        
         header("Content-Type: application/json");
 
         $objetivo = $this->modeloUsuario->obtenerPorId($usuarioId);
@@ -143,6 +154,8 @@ class AdminController {
     
         public function eliminarCuenta($usuarioId) {
         $this->verificarSesion();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');            
         header("Content-Type: application/json");
 
         $objetivo = $this->modeloUsuario->obtenerPorId($usuarioId);
@@ -187,6 +200,8 @@ class AdminController {
 
     public function atenderSolicitud($id) {
         $this->verificarSesion();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');    
         header("Content-Type: application/json");
 
         $this->modeloSolicitud->marcarAtendida($id);
@@ -195,6 +210,8 @@ class AdminController {
 
     public function crearBus($nombre, $origen, $destino, $descripcion, $propietarioId) {
         $this->verificarSesion();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');        
         header("Content-Type: application/json");
 
         if (trim($nombre) === '' || trim($origen) === '' || trim($destino) === '') {
@@ -215,6 +232,8 @@ class AdminController {
 
     public function toggleBus($id, $habilitado) {
         $this->verificarSesion();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');        
         header("Content-Type: application/json");
 
         $this->modeloBus->toggleHabilitado($id, $habilitado);
@@ -223,6 +242,8 @@ class AdminController {
 
     public function eliminarBus($id) {
         $this->verificarSesion();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');        
         header("Content-Type: application/json");
 
         $this->modeloBus->eliminar($id);
@@ -239,6 +260,8 @@ class AdminController {
 
     public function configurarHorario($horaApertura, $horaCierre) {
         $this->verificarSesion();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');        
         header("Content-Type: application/json");
 
         $this->modeloConfiguracion->actualizarHorario($horaApertura, $horaCierre);
@@ -297,7 +320,7 @@ class AdminController {
         echo json_encode(array("resenas" => $resenas));
     }
     
-            public function guardarRutaBus($busId, $puntosJson, $color) {
+    public function guardarRutaBus($busId, $puntosJson, $color) {
         $this->verificarSesion();
         header("Content-Type: application/json");
 
@@ -326,6 +349,13 @@ class AdminController {
             "puntos" => $ruta ? json_decode($ruta['puntos']) : array(),
             "color" => $ruta ? $ruta['color'] : '#F27127'
         ));
+    }
+    
+    public function obtenerTokenCsrf() {
+        session_start();
+        header("Content-Type: application/json");
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        echo json_encode(array("exito" => true, "token" => Csrf::generarToken()));
     }
 }
 ?>

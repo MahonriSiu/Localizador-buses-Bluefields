@@ -24,14 +24,21 @@ class AuditorController {
         session_start();
         header("Content-Type: application/json");
 
+        if ($this->modeloUsuario->contarIntentosFallidosRecientes($correo) >= 5) {
+            echo json_encode(array("exito" => false, "mensaje" => "Demasiados intentos fallidos. Espera 15 minutos."));
+            return;
+        }
+
         $usuario = $this->modeloUsuario->verificarLogin($correo, $contrasena);
 
         if ($usuario && $usuario['rol'] === 'auditor') {
+            $this->modeloUsuario->limpiarIntentosFallidos($correo);
             session_regenerate_id(true);
             $_SESSION['auditor_autenticado'] = true;
             $_SESSION['usuario_id'] = $usuario['id'];
             echo json_encode(array("exito" => true, "debe_cambiar" => (bool)$usuario['debe_cambiar_contrasena']));
         } else {
+            $this->modeloUsuario->registrarIntentoFallido($correo);
             echo json_encode(array("exito" => false, "mensaje" => "Correo o contrasena incorrectos"));
         }
     }

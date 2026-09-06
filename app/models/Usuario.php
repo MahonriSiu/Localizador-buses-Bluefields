@@ -110,5 +110,29 @@ class Usuario {
         $stmt->bind_param("i", $id);
         return $stmt->execute();
     }
+    
+    public function contarIntentosFallidosRecientes($correo) {
+        $sql = "SELECT COUNT(*) AS total FROM intentos_login_fallidos WHERE correo = ? AND fecha_hora > (NOW() - INTERVAL 15 MINUTE)";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bind_param("s", $correo);
+        $stmt->execute();
+        $resultado = $stmt->get_result();
+        $fila = $resultado->fetch_assoc();
+        return (int)$fila['total'];
+    }
+
+    public function registrarIntentoFallido($correo) {
+        $sql = "INSERT INTO intentos_login_fallidos (correo) VALUES (?)";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bind_param("s", $correo);
+        $stmt->execute();
+    }
+
+    public function limpiarIntentosFallidos($correo) {
+        $sql = "DELETE FROM intentos_login_fallidos WHERE correo = ?";
+        $stmt = $this->conexion->prepare($sql);
+        $stmt->bind_param("s", $correo);
+        $stmt->execute();
+    }
 }
 ?>

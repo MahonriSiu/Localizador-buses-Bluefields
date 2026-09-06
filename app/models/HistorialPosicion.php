@@ -10,7 +10,17 @@ class HistorialPosicion {
         $sql = "INSERT INTO historial_posiciones (bus_id, lat, lng) VALUES (?, ?, ?)";
         $stmt = $this->conexion->prepare($sql);
         $stmt->bind_param("idd", $busId, $lat, $lng);
-        return $stmt->execute();
+
+        if (mt_rand(1, 100) === 1) {
+            $this->limpiarRegistrosAntiguos();
+        }
+
+        return $resultado;
+    }
+
+    private function limpiarRegistrosAntiguos() {
+        $sql = "DELETE FROM historial_posiciones WHERE fecha_hora < (NOW() - INTERVAL 7 DAY) LIMIT 500";
+        $this->conexion->query($sql);
     }
 
     public function obtenerRecorridoReciente($busId, $limite = 200) {
@@ -79,7 +89,6 @@ class HistorialPosicion {
         return $radioTierra * $c;
     }
 
-    // fecha del primer registro de este bus, para saber si ya paso el periodo de aprendizaje
     public function obtenerPrimerRegistro($busId) {
         $sql = "SELECT MIN(fecha_hora) AS primera FROM historial_posiciones WHERE bus_id = ?";
         $stmt = $this->conexion->prepare($sql);

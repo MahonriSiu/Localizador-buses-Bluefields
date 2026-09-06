@@ -224,11 +224,11 @@
                 const puntosEvento = await obtenerPuntosDeEvento(e.id);
                 const totalPines = puntosEvento.filter(function (p) { return p.visible == 1; }).length;
                 const totalRuta = puntosEvento.filter(function (p) { return p.visible == 0; }).length;
-                const vigencia = e.siempre_activo == 1 ? "Permanente" : (e.fecha_inicio + " a " + e.fecha_fin);
+                const vigencia = e.siempre_activo == 1 ? "Permanente" : (escaparHtml(e.fecha_inicio) + " a " + escaparHtml(e.fecha_fin));
                 const etiqueta = e.habilitado == 1 ? "<span class='etiqueta-activo'>Habilitado</span>" : "<span class='etiqueta-inactivo'>Deshabilitado</span>";
 
                 cuerpo.innerHTML += "<tr>" +
-                    "<td><span style='display:inline-block;width:10px;height:10px;border-radius:50%;background:" + e.color + ";margin-right:6px;'></span>" + e.nombre + "</td>" +
+                    "<td><span style='display:inline-block;width:10px;height:10px;border-radius:50%;background:" + escaparHtml(e.color) + ";margin-right:6px;'></span>" + escaparHtml(e.nombre) + "</td>" +
                     "<td>" + vigencia + "</td><td>" + totalPines + "</td><td>" + totalRuta + "</td><td>" + etiqueta + "</td>" +
                     "<td><button class='boton boton-secundario' onclick='editarEventoPorId(" + e.id + ")'>Editar</button> " +
                     "<button class='boton boton-secundario' onclick='toggleEvento(" + e.id + ", " + (e.habilitado == 1 ? 0 : 1) + ")'>Cambiar estado</button> " +
@@ -242,7 +242,6 @@
 
             if (eventosCache.length > 0) cargarPinesYPuntos();
         }
-
         function editarEventoPorId(id) {
             const evento = eventosCache.find(function (e) { return e.id == id; });
             if (evento) editarEvento(evento);

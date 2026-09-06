@@ -32,6 +32,8 @@ class AnuncioController {
     // significa que ahi no va nada, no es un error.
     public function crear($nombreNegocio, $texto, $telefono) {
         $this->verificarSesionAdmin();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');        
         header("Content-Type: application/json");
 
         $tipoMedia = 'ninguno';
@@ -110,6 +112,8 @@ class AnuncioController {
 
     public function toggle($id, $activo) {
         $this->verificarSesionAdmin();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');        
         header("Content-Type: application/json");
         $this->modeloAnuncio->toggleActivo($id, $activo);
         echo json_encode(array("exito" => true));
@@ -117,6 +121,8 @@ class AnuncioController {
 
     public function eliminar($id) {
         $this->verificarSesionAdmin();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');        
         header("Content-Type: application/json");
         $this->modeloAnuncio->eliminar($id);
         echo json_encode(array("exito" => true));

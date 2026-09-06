@@ -5,7 +5,16 @@ date_default_timezone_set('America/Managua');
 ini_set('session.cookie_httponly', 1);
 ini_set('session.cookie_samesite', 'Lax');
 ini_set('session.use_strict_mode', 1);
-session_set_cookie_params(['path' => '/', 'httponly' => true, 'samesite' => 'Lax']);
+
+$esHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
+session_set_cookie_params([
+    'path' => '/',
+    'httponly' => true,
+    'samesite' => 'Lax',
+    'secure' => $esHttps
+]);
 
 if (!file_exists(__DIR__ . '/credenciales.php')) {
     http_response_code(500);

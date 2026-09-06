@@ -28,6 +28,8 @@ class RutaCreativaController {
 
     public function crearPunto($eventoId, $nombre, $descripcion, $lat, $lng, $orden, $visible) {
         $this->verificarSesionAdmin();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');        
         header("Content-Type: application/json");
 
         if ($eventoId <= 0) {
@@ -60,6 +62,8 @@ class RutaCreativaController {
 
     public function actualizarPunto($id, $nombre, $descripcion, $lat, $lng, $orden, $visible) {
         $this->verificarSesionAdmin();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');        
         header("Content-Type: application/json");
 
         if ($lng > 0) {
@@ -97,12 +101,16 @@ class RutaCreativaController {
 
     public function subirImagen($puntoId) {
         $this->verificarSesionAdmin();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');        
         header("Content-Type: application/json");
         $this->procesarSubidaImagen($puntoId, 'imagen', false);
     }
 
     public function subirPortada($puntoId) {
         $this->verificarSesionAdmin();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');        
         header("Content-Type: application/json");
         $this->procesarSubidaImagen($puntoId, 'portada', true);
     }
@@ -147,6 +155,8 @@ class RutaCreativaController {
 
     public function eliminarPunto($id) {
         $this->verificarSesionAdmin();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');        
         header("Content-Type: application/json");
         $this->modeloPunto->eliminar($id);
         echo json_encode(array("exito" => true));
@@ -154,6 +164,8 @@ class RutaCreativaController {
 
     public function eliminarImagen($imagenId) {
         $this->verificarSesionAdmin();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');        
         header("Content-Type: application/json");
         $this->modeloPunto->eliminarImagen($imagenId);
         echo json_encode(array("exito" => true));

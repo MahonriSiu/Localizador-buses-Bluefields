@@ -63,8 +63,8 @@ async function cargarCuentas() {
 
 function filaCuenta(usuario) {
     return "<tr>" +
-        "<td>" + usuario.nombre + "</td>" +
-        "<td>" + usuario.correo + "</td>" +
+        "<td>" + escaparHtml(usuario.nombre) + "</td>" +
+        "<td>" + escaparHtml(usuario.correo) + "</td>" +
         "<td><button class='boton boton-peligro' onclick='resetearContrasena(" + usuario.id + ")'>Resetear</button> " +
         "<button class='boton boton-peligro' onclick='eliminarCuentaAdmin(" + usuario.id + ")'>Eliminar</button></td>" +
         "</tr>";
@@ -132,7 +132,7 @@ async function cargarBusesAdmin() {
     if (!cuerpoTabla) return;
 
     if (!resultado.buses) {
-        cuerpoTabla.innerHTML = "<tr><td colspan='6'>" + (resultado.mensaje || "No se pudieron cargar los buses") + "</td></tr>";
+        cuerpoTabla.innerHTML = "<tr><td colspan='6'>" + escaparHtml(resultado.mensaje || "No se pudieron cargar los buses") + "</td></tr>";
         return;
     }
     cuerpoTabla.innerHTML = "";
@@ -143,10 +143,11 @@ async function cargarBusesAdmin() {
 
     resultado.buses.forEach(function (bus) {
         const etiqueta = bus.habilitado == 1 ? "<span class='etiqueta-activo'>Habilitado</span>" : "<span class='etiqueta-inactivo'>Deshabilitado</span>";
+        const etiquetaConexion = bus.conectado == 1 ? "<span class='etiqueta-activo con-pulso'><span class='pulso-vivo'></span> En vivo</span>" : "<span class='etiqueta-inactivo'>Sin señal</span>";
         cuerpoTabla.innerHTML += "<tr>" +
-            "<td>" + bus.nombre + "</td>" +
-            "<td>" + bus.origen + " - " + bus.destino + "</td>" +
-            "<td>" + (bus.nombre_propietario || "Sin dueno") + "</td>" +
+            "<td>" + escaparHtml(bus.nombre) + "</td>" +
+            "<td>" + escaparHtml(bus.origen) + " - " + escaparHtml(bus.destino) + "</td>" +
+            "<td>" + escaparHtml(bus.nombre_propietario || "Sin dueno") + "</td>" +
             "<td>" + etiqueta + "</td>" +
             "<td><button class='boton boton-secundario' onclick='toggleBus(" + bus.id + ", " + (bus.habilitado == 1 ? 0 : 1) + ")'>Cambiar estado</button></td>" +
             "<td><button class='boton boton-secundario' onclick='verCodigoEmisor(" + bus.id + ")'>Ver codigo</button> " +
@@ -216,7 +217,7 @@ async function cargarSolicitudes() {
             return;
         }
         resultado.solicitudes.forEach(function (s) {
-            cuerpo.innerHTML += "<tr><td>" + s.correo + "</td><td>" + s.fecha_solicitud + "</td>" +
+            cuerpo.innerHTML += "<tr><td>" + escaparHtml(s.correo) + "</td><td>" + escaparHtml(s.fecha_solicitud) + "</td>" +
                 "<td><button class='boton boton-secundario' onclick='atenderSolicitud(" + s.id + ")'>Marcar atendida</button></td></tr>";
         });
     });

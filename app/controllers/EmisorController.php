@@ -38,18 +38,28 @@ class EmisorController {
             return;
         }
 
+        if (!Bus::coordenadasValidas($lat, $lng)) {
+            echo json_encode(array("exito" => false, "mensaje" => "Coordenadas fuera de rango, no se guardo la posicion"));
+            return;
+        }
+
         $busId = $_SESSION['bus_id'];
         $this->modeloBus->actualizarPosicion($busId, $lat, $lng);
         $this->modeloHistorial->registrar($busId, $lat, $lng);
 
         echo json_encode(array("exito" => true));
     }
-
-    public function actualizarPosicionPorCodigo($codigo, $lat, $lng) {
+    
+        public function actualizarPosicionPorCodigo($codigo, $lat, $lng) {
         header("Content-Type: application/json");
 
         if (trim($codigo) === '' || $lat == 0 || $lng == 0) {
             echo json_encode(array("exito" => false, "mensaje" => "Faltan datos: codigo, lat y lng son obligatorios"));
+            return;
+        }
+
+        if (!Bus::coordenadasValidas($lat, $lng)) {
+            echo json_encode(array("exito" => false, "mensaje" => "Coordenadas fuera de rango, no se guardo la posicion"));
             return;
         }
 

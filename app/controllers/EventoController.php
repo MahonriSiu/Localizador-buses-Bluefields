@@ -30,6 +30,8 @@ class EventoController {
 
     public function crear($nombre, $color, $fechaInicio, $fechaFin, $siempreActivo) {
         $this->verificarSesionAdmin();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');        
         header("Content-Type: application/json");
 
         if (trim($nombre) === '') {
@@ -50,6 +52,8 @@ class EventoController {
 
     public function actualizar($id, $nombre, $color, $fechaInicio, $fechaFin, $siempreActivo) {
         $this->verificarSesionAdmin();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');        
         header("Content-Type: application/json");
 
         if (trim($nombre) === '') {
@@ -66,6 +70,8 @@ class EventoController {
 
     public function toggle($id, $habilitado) {
         $this->verificarSesionAdmin();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');        
         header("Content-Type: application/json");
         $this->modeloEvento->toggleHabilitado($id, $habilitado);
         echo json_encode(array("exito" => true));
@@ -73,6 +79,8 @@ class EventoController {
 
     public function eliminar($id) {
         $this->verificarSesionAdmin();
+        require_once(__DIR__ . "/../utilidades/Csrf.php");
+        Csrf::rechazarSiInvalido(isset($_POST['csrf_token']) ? $_POST['csrf_token'] : '');        
         header("Content-Type: application/json");
         $this->modeloEvento->eliminar($id);
         echo json_encode(array("exito" => true));

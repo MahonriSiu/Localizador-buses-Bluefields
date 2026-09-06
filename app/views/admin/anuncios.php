@@ -91,7 +91,7 @@
             }
         }
 
-        async function cargarAnuncios() {
+                async function cargarAnuncios() {
             const resultado = await llamarApi(URL_BASE + "/admin_obtener_anuncios.php", {});
             const cuerpo = document.getElementById("cuerpo-tabla-anuncios");
             cuerpo.innerHTML = "";
@@ -105,7 +105,7 @@
                 const etiqueta = a.activo == 1 ? "<span class='etiqueta-activo'>Activo</span>" : "<span class='etiqueta-inactivo'>Inactivo</span>";
                 const media = a.tipo_media !== 'ninguno' ? a.tipo_media : "—";
                 const audio = a.url_audio ? "Si" : "—";
-                cuerpo.innerHTML += "<tr><td>" + (a.nombre_negocio || "(sin nombre)") + "</td><td>" + (a.texto || "(sin texto)") + "</td><td>" + media + "</td><td>" + audio + "</td><td>" + etiqueta + "</td>" +
+                cuerpo.innerHTML += "<tr><td>" + escaparHtml(a.nombre_negocio || "(sin nombre)") + "</td><td>" + escaparHtml(a.texto || "(sin texto)") + "</td><td>" + media + "</td><td>" + audio + "</td><td>" + etiqueta + "</td>" +
                     "<td><button class='boton boton-secundario' onclick='toggleAnuncio(" + a.id + ", " + (a.activo == 1 ? 0 : 1) + ")'>Cambiar estado</button> " +
                     "<button class='boton boton-peligro' onclick='eliminarAnuncio(" + a.id + ")'>Eliminar</button></td></tr>";
             });

@@ -15,6 +15,10 @@ function calcularDistanciaMetros(lat1, lng1, lat2, lng2) {
 
 async function llamarApi(url, datos) {
     try {
+        if (tokenCsrfActual) {
+            datos = Object.assign({}, datos, { csrf_token: tokenCsrfActual });
+        }
+
         const respuesta = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -106,6 +110,13 @@ function animarNumero(elemento, valorFinal) {
     requestAnimationFrame(paso);
 }
 
+function escaparHtml(texto) {
+    if (texto === null || texto === undefined) return "";
+    const div = document.createElement("div");
+    div.textContent = String(texto);
+    return div.innerHTML;
+}
+
 document.addEventListener("click", function (evento) {
     if (document.startViewTransition) return;
 
@@ -129,4 +140,24 @@ document.addEventListener("click", function (evento) {
     setTimeout(function () {
         window.location.href = enlace.href;
     }, 150);
+});
+
+let tokenCsrfActual = null;
+
+async function obtenerTokenCsrf() {
+    if (tokenCsrfActual) return tokenCsrfActual;
+    try {
+        const respuesta = await fetch(URL_BASE + "/obtener_token_csrf.php");
+        const resultado = await respuesta.json();
+        tokenCsrfActual = resultado.token;
+        return tokenCsrfActual;
+    } catch (error) {
+        return null;
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    if (document.getElementById("cuerpo-tabla-buses") || document.getElementById("cuerpo-tabla-eventos") || document.getElementById("cuerpo-tabla-anuncios") || document.getElementById("cuerpo-tabla-auditores")) {
+        obtenerTokenCsrf();
+    }
 });

@@ -68,6 +68,7 @@
                             <th>Ruta</th>
                             <th>Propietario</th>
                             <th>Estado</th>
+                            <th>Conexion</th>
                             <th>Accion</th>
                             <th>Codigo Emisor / Eliminar</th>
                         </tr>
